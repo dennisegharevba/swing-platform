@@ -1,25 +1,33 @@
-﻿import sys
+import sys
 import os
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-os.environ.setdefault('DATABASE_URL', 'sqlite+aiosqlite:///./data/platform.db')
+
+# Must be first — fixes module resolution on Streamlit Cloud
+_root = os.path.dirname(os.path.abspath(__file__))
+if _root not in sys.path:
+    sys.path.insert(0, _root)
+
+# Also add the mount path used by Streamlit Cloud
+for _p in ['/mount/src/swing-platform', '/app', _root]:
+    if os.path.exists(_p) and _p not in sys.path:
+        sys.path.insert(0, _p)
 
 import asyncio
 import concurrent.futures
 from pathlib import Path
 import streamlit as st
 
-# Initialise database tables on startup
-def init_db():
-    async def _init():
+# Init database
+def _init_db():
+    async def _run():
         from src.core.database import create_tables
         await create_tables()
-    with concurrent.futures.ThreadPoolExecutor(max_workers=1) as pool:
-        pool.submit(asyncio.run, _init()).result(timeout=30)
+    with concurrent.futures.ThreadPoolExecutor(max_workers=1) as p:
+        p.submit(asyncio.run, _run()).result(timeout=30)
 
 try:
-    init_db()
-except Exception as e:
-    st.warning(f"DB init: {e}")
+    _init_db()
+except Exception as _e:
+    pass
 
 st.set_page_config(
     page_title="COT Intelligence Platform",
@@ -53,6 +61,6 @@ with st.sidebar:
 page_path = Path(PAGES[selection])
 if page_path.exists():
     with open(page_path) as f:
-        exec(compile(f.read(), str(page_path), "exec"), {"__name__": "__main__"})
+        exec(compile(f.read(), str(page_path), "exec"), {"__name__": "__main__", "__file__": str(page_path)})
 else:
     st.error(f"Page not found: {page_path}")

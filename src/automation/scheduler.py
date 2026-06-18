@@ -22,7 +22,7 @@ settings = get_settings()
 
 
 async def run_daily_scan() -> None:
-    """Daily automated scan — sends top alerts."""
+    """Daily automated scan â€” sends top alerts."""
     logger.info("=== DAILY SCAN STARTING ===")
     started = datetime.utcnow()
     log = ScanLog(scan_type="daily", started_at=started)
@@ -101,14 +101,14 @@ async def run_daily_scan() -> None:
 
 async def run_weekly_cot_scan() -> None:
     """
-    Weekly COT scan — runs Friday after COT data release.
+    Weekly COT scan â€” runs Friday after COT data release.
     Full analysis including fresh COT download.
     """
     logger.info("=== WEEKLY COT SCAN STARTING ===")
     # Clear COT cache to force fresh download
     from src.data.market_data import _cot_cache
     _cot_cache.clear()
-    logger.info("COT cache cleared — fetching fresh CFTC data")
+    logger.info("COT cache cleared â€” fetching fresh CFTC data")
     await run_daily_scan()
 
 
@@ -130,7 +130,7 @@ def create_scheduler() -> AsyncIOScheduler:
         replace_existing=True,
     )
 
-    # Weekly COT scan — Friday 16:00 ET (after CFTC release)
+    # Weekly COT scan â€” Friday 16:00 ET (after CFTC release)
     scheduler.add_job(
         run_weekly_cot_scan,
         CronTrigger(
@@ -145,7 +145,7 @@ def create_scheduler() -> AsyncIOScheduler:
     )
 
     logger.info(
-        "Scheduler configured — daily={}:{:02d}, COT=Friday {}:00 ET",
+        "Scheduler configured â€” daily={}:{:02d}, COT=Friday {}:00 ET",
         settings.daily_scan_hour,
         settings.daily_scan_minute,
         settings.weekly_cot_hour,

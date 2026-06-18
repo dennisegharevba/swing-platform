@@ -1,4 +1,9 @@
-"""Performance Analytics — historical signal performance from database."""
+import sys, os
+for _p in ['/mount/src/swing-platform', os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))]:
+    if os.path.exists(_p) and _p not in sys.path:
+        sys.path.insert(0, _p)
+
+"""Performance Analytics â€” historical signal performance from database."""
 from __future__ import annotations
 
 import pandas as pd
@@ -12,7 +17,7 @@ from src.dashboard.helpers import (
 )
 
 apply_theme()
-st.title("📈 Performance Analytics")
+st.title("ðŸ“ˆ Performance Analytics")
 st.caption("Historical signal statistics from database")
 
 @st.cache_data(ttl=300)
@@ -43,7 +48,7 @@ def load_signals_df() -> pd.DataFrame:
         ]
     return pd.DataFrame(async_run(_q()))
 
-with st.spinner("Loading historical data…"):
+with st.spinner("Loading historical dataâ€¦"):
     df_signals = load_signals_df()
 
 if df_signals.empty:
@@ -56,8 +61,8 @@ if df_signals.empty:
     """)
     st.stop()
 
-# ── Summary KPIs ──────────────────────────────────────────────────────────────
-st.subheader("📊 Signal Statistics")
+# â”€â”€ Summary KPIs â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+st.subheader("ðŸ“Š Signal Statistics")
 c1, c2, c3, c4, c5 = st.columns(5)
 c1.metric("Total Signals", len(df_signals))
 c2.metric("Unique Markets", df_signals["symbol"].nunique())
@@ -67,8 +72,8 @@ c5.metric("Shorts", (df_signals["direction"] == "short").sum())
 
 st.divider()
 
-# ── Score distribution ────────────────────────────────────────────────────────
-st.subheader("📈 Score Distribution")
+# â”€â”€ Score distribution â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+st.subheader("ðŸ“ˆ Score Distribution")
 
 fig_hist = go.Figure()
 fig_hist.add_trace(go.Histogram(
@@ -80,8 +85,8 @@ fig_hist.add_vline(x=70, line_dash="dash", line_color=BULL_GREEN, annotation_tex
 fig_hist.update_layout(**{**PLOTLY_LAYOUT, "height": 300, "title": "Signal Score Distribution"})
 st.plotly_chart(fig_hist, use_container_width=True)
 
-# ── Signals over time ─────────────────────────────────────────────────────────
-st.subheader("📅 Signals Over Time")
+# â”€â”€ Signals over time â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+st.subheader("ðŸ“… Signals Over Time")
 df_signals["date"] = pd.to_datetime(df_signals["scanned_at"]).dt.date
 daily_counts = df_signals.groupby("date").size().reset_index(name="count")
 
@@ -92,10 +97,10 @@ fig_time = go.Figure(go.Bar(
 fig_time.update_layout(**{**PLOTLY_LAYOUT, "height": 280, "title": "Signals Generated Per Day"})
 st.plotly_chart(fig_time, use_container_width=True)
 
-# ── Per-market signal count ───────────────────────────────────────────────────
+# â”€â”€ Per-market signal count â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 col_a, col_b = st.columns(2)
 with col_a:
-    st.subheader("🎯 Signals by Market")
+    st.subheader("ðŸŽ¯ Signals by Market")
     by_market = df_signals.groupby("name")["score"].agg(["count", "mean"]).sort_values("count", ascending=True)
     fig_mkt = go.Figure(go.Bar(
         y=by_market.index, x=by_market["count"],
@@ -105,7 +110,7 @@ with col_a:
     st.plotly_chart(fig_mkt, use_container_width=True)
 
 with col_b:
-    st.subheader("📊 Avg Score by Market")
+    st.subheader("ðŸ“Š Avg Score by Market")
     fig_avg = go.Figure(go.Bar(
         y=by_market.index, x=by_market["mean"].round(1),
         orientation="h",
@@ -119,8 +124,8 @@ with col_b:
     fig_avg.update_layout(**{**PLOTLY_LAYOUT, "height": 350})
     st.plotly_chart(fig_avg, use_container_width=True)
 
-# ── Asset class breakdown ─────────────────────────────────────────────────────
-st.subheader("🥧 Signal Distribution by Asset Class")
+# â”€â”€ Asset class breakdown â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+st.subheader("ðŸ¥§ Signal Distribution by Asset Class")
 ac_counts = df_signals["asset_class"].value_counts()
 fig_pie = go.Figure(go.Pie(
     labels=ac_counts.index.str.title(),
@@ -131,9 +136,9 @@ fig_pie = go.Figure(go.Pie(
 fig_pie.update_layout(**{**PLOTLY_LAYOUT, "height": 280})
 st.plotly_chart(fig_pie, use_container_width=True)
 
-# ── Component score breakdown ─────────────────────────────────────────────────
+# â”€â”€ Component score breakdown â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 st.divider()
-st.subheader("🧩 Average Component Scores")
+st.subheader("ðŸ§© Average Component Scores")
 comp_avgs = {
     "COT (max 35)": df_signals["cot_score"].mean(),
     "Seasonality (max 25)": df_signals["seasonality_score"].mean(),
@@ -158,6 +163,6 @@ fig_comp.update_layout(**{
 })
 st.plotly_chart(fig_comp, use_container_width=True)
 
-if st.button("🔄 Refresh"):
+if st.button("ðŸ”„ Refresh"):
     st.cache_data.clear()
     st.rerun()

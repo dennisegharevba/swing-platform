@@ -1,4 +1,9 @@
-"""VIX Dashboard — volatility regime analysis."""
+import sys, os
+for _p in ['/mount/src/swing-platform', os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))]:
+    if os.path.exists(_p) and _p not in sys.path:
+        sys.path.insert(0, _p)
+
+"""VIX Dashboard â€” volatility regime analysis."""
 from __future__ import annotations
 
 import pandas as pd
@@ -12,8 +17,8 @@ from src.dashboard.helpers import (
 )
 
 apply_theme()
-st.title("⚡ VIX Dashboard")
-st.caption("CBOE Volatility Index — market fear gauge and position override rules")
+st.title("âš¡ VIX Dashboard")
+st.caption("CBOE Volatility Index â€” market fear gauge and position override rules")
 
 @st.cache_data(ttl=300, show_spinner=False)
 def load_vix():
@@ -21,7 +26,7 @@ def load_vix():
     df = async_run(fetch_price_data("VIX", period="2y"))
     return enrich_ohlcv(df) if not df.empty else df
 
-with st.spinner("Loading VIX data…"):
+with st.spinner("Loading VIX dataâ€¦"):
     df = load_vix()
 
 if df.empty:
@@ -33,13 +38,13 @@ vix_now = float(last["close"])
 vix_prev = float(df["close"].iloc[-2]) if len(df) > 1 else vix_now
 vix_chg = vix_now - vix_prev
 
-# ── Regime header ─────────────────────────────────────────────────────────────
+# â”€â”€ Regime header â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 if vix_now > 35:
-    st.error(f"⛔ VIX HARD OVERRIDE ACTIVE — {vix_now:.2f} > 35 — NO NEW POSITIONS")
+    st.error(f"â›” VIX HARD OVERRIDE ACTIVE â€” {vix_now:.2f} > 35 â€” NO NEW POSITIONS")
 elif vix_now > 25:
-    st.warning(f"⚠️ VIX Elevated: {vix_now:.2f} — Reduce position sizing")
+    st.warning(f"âš ï¸ VIX Elevated: {vix_now:.2f} â€” Reduce position sizing")
 else:
-    st.success(f"✅ VIX Normal: {vix_now:.2f} — Full allocation permitted")
+    st.success(f"âœ… VIX Normal: {vix_now:.2f} â€” Full allocation permitted")
 
 c1, c2, c3, c4 = st.columns(4)
 c1.metric("Current VIX", f"{vix_now:.2f}", f"{vix_chg:+.2f}", delta_color="inverse")
@@ -49,17 +54,17 @@ c4.metric("52-Week Low",  f"{df['close'].min():.2f}")
 
 st.divider()
 
-# ── VIX chart ─────────────────────────────────────────────────────────────────
-st.subheader("📈 VIX History")
+# â”€â”€ VIX chart â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+st.subheader("ðŸ“ˆ VIX History")
 
 vix_series = df["close"].tail(252)
 fig = go.Figure()
 
 # Colour by zone
 for threshold, color, label in [
-    (35, "#7b0000", "Extreme (>35) — Override Zone"),
-    (25, "#cc4400", "High (25–35)"),
-    (20, "#ccaa00", "Elevated (20–25)"),
+    (35, "#7b0000", "Extreme (>35) â€” Override Zone"),
+    (25, "#cc4400", "High (25â€“35)"),
+    (20, "#ccaa00", "Elevated (20â€“25)"),
     (0,  "#006633", "Low (<20)"),
 ]:
     pass  # handled by shaded regions below
@@ -79,11 +84,11 @@ for y, color, label in [
                   annotation_text=label, annotation_position="right")
 
 fig.update_layout(**{**PLOTLY_LAYOUT, "height": 380,
-                     "title": "VIX — CBOE Volatility Index (252 days)"})
+                     "title": "VIX â€” CBOE Volatility Index (252 days)"})
 st.plotly_chart(fig, use_container_width=True)
 
-# ── Zone distribution ─────────────────────────────────────────────────────────
-st.subheader("📊 Regime Zone Distribution (1yr)")
+# â”€â”€ Zone distribution â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+st.subheader("ðŸ“Š Regime Zone Distribution (1yr)")
 zones = {
     "Low (<20)":      (df["close"].tail(252) < 20).sum(),
     "Elevated (20-25)": ((df["close"].tail(252) >= 20) & (df["close"].tail(252) < 25)).sum(),
@@ -100,14 +105,14 @@ fig_z = go.Figure(go.Bar(
 fig_z.update_layout(**{**PLOTLY_LAYOUT, "height": 280, "showlegend": False})
 st.plotly_chart(fig_z, use_container_width=True)
 
-# ── Rules reminder ────────────────────────────────────────────────────────────
+# â”€â”€ Rules reminder â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 st.divider()
-st.subheader("📜 VIX Rules")
+st.subheader("ðŸ“œ VIX Rules")
 st.markdown("""
 | VIX Level | Action |
 |-----------|--------|
-| < 20      | 🟢 Full allocation — all signals valid |
-| 20–25     | 🟡 Elevated — consider reducing size by 25% |
-| 25–35     | 🟠 High — caution, tighten stops |
-| > 35      | 🔴 **HARD OVERRIDE — No new longs or shorts** |
+| < 20      | ðŸŸ¢ Full allocation â€” all signals valid |
+| 20â€“25     | ðŸŸ¡ Elevated â€” consider reducing size by 25% |
+| 25â€“35     | ðŸŸ  High â€” caution, tighten stops |
+| > 35      | ðŸ”´ **HARD OVERRIDE â€” No new longs or shorts** |
 """)
