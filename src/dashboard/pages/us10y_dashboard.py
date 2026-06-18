@@ -1,10 +1,15 @@
+from __future__ import annotations
 import sys, os
 for _p in ['/mount/src/swing-platform', os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))]:
     if os.path.exists(_p) and _p not in sys.path:
         sys.path.insert(0, _p)
 
-"""US10Y Dashboard â€” 10-year yield regime for equity signals."""
-from __future__ import annotations
+import sys, os
+for _p in ['/mount/src/swing-platform', os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))]:
+    if os.path.exists(_p) and _p not in sys.path:
+        sys.path.insert(0, _p)
+
+"""US10Y Dashboard Ã¢â‚¬â€ 10-year yield regime for equity signals."""
 
 import plotly.graph_objects as go
 import streamlit as st
@@ -15,8 +20,8 @@ from src.dashboard.helpers import (
 )
 
 apply_theme()
-st.title("ðŸ“‰ US10Y Dashboard")
-st.caption("US 10-Year Treasury Yield â€” regime filter for equity long/short signals")
+st.title("Ã°Å¸â€œâ€° US10Y Dashboard")
+st.caption("US 10-Year Treasury Yield Ã¢â‚¬â€ regime filter for equity long/short signals")
 
 @st.cache_data(ttl=900, show_spinner=False)
 def load_us10y():
@@ -24,7 +29,7 @@ def load_us10y():
     df = async_run(fetch_us10y())
     return enrich_ohlcv(df) if not df.empty else df
 
-with st.spinner("Loading US10Y dataâ€¦"):
+with st.spinner("Loading US10Y dataÃ¢â‚¬Â¦"):
     df = load_us10y()
 
 if df.empty:
@@ -38,13 +43,13 @@ above_ma = ma200 is not None and yield_now > ma200
 
 if above_ma:
     st.warning(
-        f"ðŸ“‰ US10Y {yield_now:.3f}% â€” **Above MA200 ({ma200:.3f}%)** "
-        f"â†’ âš ï¸ Headwind for equity longs / âœ… Favour equity shorts"
+        f"Ã°Å¸â€œâ€° US10Y {yield_now:.3f}% Ã¢â‚¬â€ **Above MA200 ({ma200:.3f}%)** "
+        f"Ã¢â€ â€™ Ã¢Å¡Â Ã¯Â¸Â Headwind for equity longs / Ã¢Å“â€¦ Favour equity shorts"
     )
 else:
     st.success(
-        f"ðŸ“‰ US10Y {yield_now:.3f}% â€” **Below MA200 ({ma200:.3f}%)** "
-        f"â†’ âœ… Allow equity longs / âš ï¸ Avoid equity shorts"
+        f"Ã°Å¸â€œâ€° US10Y {yield_now:.3f}% Ã¢â‚¬â€ **Below MA200 ({ma200:.3f}%)** "
+        f"Ã¢â€ â€™ Ã¢Å“â€¦ Allow equity longs / Ã¢Å¡Â Ã¯Â¸Â Avoid equity shorts"
     )
 
 c1, c2, c3, c4 = st.columns(4)
@@ -53,17 +58,17 @@ if ma200:
     diff = yield_now - ma200
     c2.metric("MA200", f"{ma200:.3f}%", f"{diff:+.3f}%", delta_color="inverse")
 c3.metric("MA50", f"{last.get('ma_50', 0):.3f}%" if last.get("ma_50") else "N/A")
-c4.metric("YTD Range", f"{df['close'].tail(252).min():.3f}â€“{df['close'].tail(252).max():.3f}%")
+c4.metric("YTD Range", f"{df['close'].tail(252).min():.3f}Ã¢â‚¬â€œ{df['close'].tail(252).max():.3f}%")
 
 st.divider()
 
-# â”€â”€ Yield chart â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-st.subheader("ðŸ“ˆ US 10Y Yield History")
+# Ã¢â€â‚¬Ã¢â€â‚¬ Yield chart Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
+st.subheader("Ã°Å¸â€œË† US 10Y Yield History")
 fig = candlestick_chart(df.tail(252), "US 10Y Treasury Yield (%)")
 st.plotly_chart(fig, use_container_width=True)
 
-# â”€â”€ Regime over time â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-st.subheader("ðŸ“Š Yield vs MA200 â€” Rolling Regime")
+# Ã¢â€â‚¬Ã¢â€â‚¬ Regime over time Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
+st.subheader("Ã°Å¸â€œÅ  Yield vs MA200 Ã¢â‚¬â€ Rolling Regime")
 if "ma_200" in df.columns:
     diff_series = (df["close"] - df["ma_200"]).dropna().tail(252)
     colors_d = [BULL_GREEN if v < 0 else BEAR_RED for v in diff_series.values]
@@ -76,13 +81,13 @@ if "ma_200" in df.columns:
     fig_d.update_layout(**{
         **PLOTLY_LAYOUT,
         "height": 260,
-        "title": "10Y Yield minus MA200 â€” negative (green) = equity longs favoured",
+        "title": "10Y Yield minus MA200 Ã¢â‚¬â€ negative (green) = equity longs favoured",
     })
     st.plotly_chart(fig_d, use_container_width=True)
 
-# â”€â”€ Real yield section â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# Ã¢â€â‚¬Ã¢â€â‚¬ Real yield section Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 st.divider()
-st.subheader("ðŸ’Ž Real Yield (Gold / Silver Filter)")
+st.subheader("Ã°Å¸â€™Å½ Real Yield (Gold / Silver Filter)")
 
 @st.cache_data(ttl=3600, show_spinner=False)
 def load_real_yield():
@@ -90,19 +95,19 @@ def load_real_yield():
     return async_run(fetch_real_yield())
 
 ry_chg = load_real_yield()
-ry_label = "Rising âš ï¸ â€” Avoid Gold/Silver Longs" if ry_chg > 0 else "Falling âœ… â€” Gold/Silver Longs Allowed"
+ry_label = "Rising Ã¢Å¡Â Ã¯Â¸Â Ã¢â‚¬â€ Avoid Gold/Silver Longs" if ry_chg > 0 else "Falling Ã¢Å“â€¦ Ã¢â‚¬â€ Gold/Silver Longs Allowed"
 if ry_chg > 0:
-    st.warning(f"Real Yield 20d Change: **{ry_chg:+.3f}%** â†’ {ry_label}")
+    st.warning(f"Real Yield 20d Change: **{ry_chg:+.3f}%** Ã¢â€ â€™ {ry_label}")
 else:
-    st.success(f"Real Yield 20d Change: **{ry_chg:+.3f}%** â†’ {ry_label}")
+    st.success(f"Real Yield 20d Change: **{ry_chg:+.3f}%** Ã¢â€ â€™ {ry_label}")
 
 st.divider()
-st.subheader("ðŸ“œ US10Y Rules")
+st.subheader("Ã°Å¸â€œÅ“ US10Y Rules")
 st.markdown("""
 | US10Y vs MA200 | Equity Longs | Equity Shorts |
 |----------------|-------------|---------------|
-| **Below MA200** | âœ… Allowed â€” full macro score | âš ï¸ Reduced macro score |
-| **Above MA200** | âš ï¸ Reduced macro score | âœ… Allowed â€” full macro score |
+| **Below MA200** | Ã¢Å“â€¦ Allowed Ã¢â‚¬â€ full macro score | Ã¢Å¡Â Ã¯Â¸Â Reduced macro score |
+| **Above MA200** | Ã¢Å¡Â Ã¯Â¸Â Reduced macro score | Ã¢Å“â€¦ Allowed Ã¢â‚¬â€ full macro score |
 
-Real yield filter applies **only to Gold and Silver** â€” not Copper or Crude Oil.
+Real yield filter applies **only to Gold and Silver** Ã¢â‚¬â€ not Copper or Crude Oil.
 """)

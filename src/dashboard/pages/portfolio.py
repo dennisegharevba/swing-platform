@@ -1,10 +1,15 @@
+from __future__ import annotations
 import sys, os
 for _p in ['/mount/src/swing-platform', os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))]:
     if os.path.exists(_p) and _p not in sys.path:
         sys.path.insert(0, _p)
 
-"""Portfolio Page â€” cash management, exposure, position sizing."""
-from __future__ import annotations
+import sys, os
+for _p in ['/mount/src/swing-platform', os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))]:
+    if os.path.exists(_p) and _p not in sys.path:
+        sys.path.insert(0, _p)
+
+"""Portfolio Page Ã¢â‚¬â€ cash management, exposure, position sizing."""
 
 import pandas as pd
 import plotly.graph_objects as go
@@ -16,21 +21,21 @@ from src.dashboard.helpers import (
 )
 
 apply_theme()
-st.title("ðŸ’¼ Portfolio Management")
+st.title("Ã°Å¸â€™Â¼ Portfolio Management")
 
 @st.cache_data(ttl=900, show_spinner=False)
 def get_scan():
     from src.signals.scanner import scan_universe
     return async_run(scan_universe())
 
-with st.spinner("Loading portfolio dataâ€¦"):
+with st.spinner("Loading portfolio dataÃ¢â‚¬Â¦"):
     result = get_scan()
 
 macro_score = result.aggregate_macro_score
 cash_pct    = 0.30 if macro_score < 48 else 0.15
 
-# â”€â”€ Cash management header â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-st.subheader("ðŸ¦ Portfolio Cash Rule")
+# Ã¢â€â‚¬Ã¢â€â‚¬ Cash management header Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
+st.subheader("Ã°Å¸ÂÂ¦ Portfolio Cash Rule")
 c1, c2, c3 = st.columns(3)
 c1.metric("Aggregate Macro Score", f"{macro_score:.1f}/100")
 c2.metric("Required Cash Reserve", f"{cash_pct*100:.0f}%",
@@ -40,8 +45,8 @@ c3.metric("Max Deployable Capital", f"{(1-cash_pct)*100:.0f}%")
 
 st.divider()
 
-# â”€â”€ Position sizing table â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-st.subheader("ðŸ“‹ Active Signal Position Sizing")
+# Ã¢â€â‚¬Ã¢â€â‚¬ Position sizing table Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
+st.subheader("Ã°Å¸â€œâ€¹ Active Signal Position Sizing")
 
 if result.signals:
     rows = []
@@ -81,7 +86,7 @@ if result.signals:
     )
 
     # Exposure pie
-    st.subheader("ðŸŽ¯ Sector Exposure")
+    st.subheader("Ã°Å¸Å½Â¯ Sector Exposure")
     class_counts = {"Equity": 0, "Commodity": 0, "Agriculture": 0}
     for sig in result.signals:
         class_counts[sig.asset_class.value.title()] = class_counts.get(sig.asset_class.value.title(), 0) + 1
@@ -96,18 +101,18 @@ if result.signals:
     st.plotly_chart(fig_pie, use_container_width=True)
 
 else:
-    st.info("No active signals â€” portfolio is in full cash mode.")
+    st.info("No active signals Ã¢â‚¬â€ portfolio is in full cash mode.")
 
-# â”€â”€ Portfolio rules reminder â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# Ã¢â€â‚¬Ã¢â€â‚¬ Portfolio rules reminder Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 st.divider()
-st.subheader("ðŸ“œ Portfolio Rules")
+st.subheader("Ã°Å¸â€œÅ“ Portfolio Rules")
 rules = [
     ("Minimum Cash Reserve",     "15% always"),
     ("Elevated Cash Reserve",    "30% when Aggregate Macro Score < 48"),
     ("Max Risk Per Position",    "2% of portfolio"),
-    ("Stop Method",              "2Ã— ATR from entry"),
-    ("TP1",                      "1.5Ã— risk distance"),
-    ("TP2",                      "3.0Ã— risk distance"),
+    ("Stop Method",              "2Ãƒâ€” ATR from entry"),
+    ("TP1",                      "1.5Ãƒâ€” risk distance"),
+    ("TP2",                      "3.0Ãƒâ€” risk distance"),
     ("Max Positions",            "12 simultaneous"),
     ("VIX Hard Override",        "No new positions when VIX > 35"),
 ]

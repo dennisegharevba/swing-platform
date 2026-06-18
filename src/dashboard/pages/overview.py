@@ -1,10 +1,15 @@
+from __future__ import annotations
 import sys, os
 for _p in ['/mount/src/swing-platform', os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))]:
     if os.path.exists(_p) and _p not in sys.path:
         sys.path.insert(0, _p)
 
-"""Overview Page â€” top-level market snapshot and quick signal summary."""
-from __future__ import annotations
+import sys, os
+for _p in ['/mount/src/swing-platform', os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))]:
+    if os.path.exists(_p) and _p not in sys.path:
+        sys.path.insert(0, _p)
+
+"""Overview Page Ã¢â‚¬â€ top-level market snapshot and quick signal summary."""
 
 import streamlit as st
 from src.dashboard.helpers import (
@@ -16,16 +21,16 @@ import plotly.graph_objects as go
 
 apply_theme()
 
-st.title("ðŸ“Š COT Intelligence Platform")
-st.caption("Institutional Swing Trading Â· Real-Time Overview")
+st.title("Ã°Å¸â€œÅ  COT Intelligence Platform")
+st.caption("Institutional Swing Trading Ã‚Â· Real-Time Overview")
 
-# â”€â”€ Run scan (cached for 15 min) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# Ã¢â€â‚¬Ã¢â€â‚¬ Run scan (cached for 15 min) Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 @st.cache_data(ttl=900, show_spinner=False)
 def get_scan():
     from src.signals.scanner import scan_universe
     return async_run(scan_universe())
 
-with st.spinner("ðŸ”„ Running market scanâ€¦"):
+with st.spinner("Ã°Å¸â€â€ž Running market scanÃ¢â‚¬Â¦"):
     try:
         result = get_scan()
         error = None
@@ -37,26 +42,26 @@ if error:
     st.error(f"Scan failed: {error}")
     st.stop()
 
-# â”€â”€ Regime strip â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-st.subheader("âš¡ Current Macro Regime")
+# Ã¢â€â‚¬Ã¢â€â‚¬ Regime strip Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
+st.subheader("Ã¢Å¡Â¡ Current Macro Regime")
 c1, c2, c3, c4, c5 = st.columns(5)
 
 vix = result.regime.vix
 vix_color = BEAR_RED if vix > 35 else GOLD if vix > 25 else BULL_GREEN
-c1.metric("VIX", f"{vix:.2f}", delta="â›” OVERRIDE" if vix > 35 else None,
+c1.metric("VIX", f"{vix:.2f}", delta="Ã¢â€ºâ€ OVERRIDE" if vix > 35 else None,
           delta_color="inverse")
 
 dxy_r = result.regime.dxy_regime.title()
 c2.metric("DXY Regime", dxy_r,
-          delta="ðŸ“ˆ Strong $" if result.regime.dxy_bullish else "ðŸ“‰ Weak $")
+          delta="Ã°Å¸â€œË† Strong $" if result.regime.dxy_bullish else "Ã°Å¸â€œâ€° Weak $")
 
 us10y_r = "Above MA200" if result.regime.us10y_above_ma else "Below MA200"
 c3.metric("US10Y Regime", us10y_r,
-          delta="âš ï¸ Equity Headwind" if result.regime.us10y_above_ma else "âœ… Equity Tailwind")
+          delta="Ã¢Å¡Â Ã¯Â¸Â Equity Headwind" if result.regime.us10y_above_ma else "Ã¢Å“â€¦ Equity Tailwind")
 
 ry_r = result.regime.real_yield_regime.title()
 c4.metric("Real Yield", ry_r,
-          delta="âš ï¸ Avoid Gold/Silver Longs" if result.regime.real_yield_rising else "âœ… Gold/Silver Favourable")
+          delta="Ã¢Å¡Â Ã¯Â¸Â Avoid Gold/Silver Longs" if result.regime.real_yield_rising else "Ã¢Å“â€¦ Gold/Silver Favourable")
 
 cash_req = "30%" if result.aggregate_macro_score < 48 else "15%"
 c5.metric("Cash Reserve Required", cash_req,
@@ -64,14 +69,14 @@ c5.metric("Cash Reserve Required", cash_req,
 
 st.divider()
 
-# â”€â”€ Signal summary â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# Ã¢â€â‚¬Ã¢â€â‚¬ Signal summary Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 col_left, col_right = st.columns([2, 1])
 
 with col_left:
-    st.subheader(f"ðŸ“¡ Top Signals ({len(result.signals)} found)")
+    st.subheader(f"Ã°Å¸â€œÂ¡ Top Signals ({len(result.signals)} found)")
 
     if result.signals:
-        tabs = st.tabs(["ðŸ† Top 5", "ðŸ“ˆ Equities", "ðŸ… Commodities", "ðŸŒ¾ Agriculture"])
+        tabs = st.tabs(["Ã°Å¸Ââ€  Top 5", "Ã°Å¸â€œË† Equities", "Ã°Å¸Ââ€¦ Commodities", "Ã°Å¸Å’Â¾ Agriculture"])
         with tabs[0]:
             for sig in result.top_signals[:5]:
                 render_signal_card(sig)
@@ -98,12 +103,12 @@ with col_left:
                 st.info("No agriculture signals at threshold.")
     else:
         if result.regime.vix_override:
-            st.warning("â›” VIX Override Active â€” No new positions permitted.")
+            st.warning("Ã¢â€ºâ€ VIX Override Active Ã¢â‚¬â€ No new positions permitted.")
         else:
             st.info("No signals above threshold. Check back after COT release.")
 
 with col_right:
-    st.subheader("ðŸ“Š Score Distribution")
+    st.subheader("Ã°Å¸â€œÅ  Score Distribution")
 
     if result.signals:
         scores = [s.score for s in result.signals]
@@ -128,7 +133,7 @@ with col_right:
     else:
         st.info("No signals to display.")
 
-    st.subheader("ðŸ§® Signal Breakdown")
+    st.subheader("Ã°Å¸Â§Â® Signal Breakdown")
     rows = [
         ("Total Signals", len(result.signals)),
         ("Equities", len(result.equities)),
@@ -149,7 +154,7 @@ with col_right:
         )
 
 st.divider()
-st.caption(f"Last updated: {result.scanned_at.strftime('%Y-%m-%d %H:%M UTC')} Â· Auto-refresh every 15 min")
-if st.button("ðŸ”„ Force Refresh"):
+st.caption(f"Last updated: {result.scanned_at.strftime('%Y-%m-%d %H:%M UTC')} Ã‚Â· Auto-refresh every 15 min")
+if st.button("Ã°Å¸â€â€ž Force Refresh"):
     st.cache_data.clear()
     st.rerun()

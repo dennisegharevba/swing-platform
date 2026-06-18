@@ -1,10 +1,15 @@
+from __future__ import annotations
 import sys, os
 for _p in ['/mount/src/swing-platform', os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))]:
     if os.path.exists(_p) and _p not in sys.path:
         sys.path.insert(0, _p)
 
-"""Seasonality Dashboard â€” monthly bias heatmaps for all markets."""
-from __future__ import annotations
+import sys, os
+for _p in ['/mount/src/swing-platform', os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))]:
+    if os.path.exists(_p) and _p not in sys.path:
+        sys.path.insert(0, _p)
+
+"""Seasonality Dashboard Ã¢â‚¬â€ monthly bias heatmaps for all markets."""
 
 import pandas as pd
 import plotly.graph_objects as go
@@ -21,25 +26,25 @@ from src.dashboard.helpers import (
 )
 
 apply_theme()
-st.title("ðŸ—“ Seasonality Dashboard")
-st.caption("20-year average monthly returns by asset â€” positive = historically bullish month")
+st.title("Ã°Å¸â€”â€œ Seasonality Dashboard")
+st.caption("20-year average monthly returns by asset Ã¢â‚¬â€ positive = historically bullish month")
 
 MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]
 
-# â”€â”€ Current month highlight â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# Ã¢â€â‚¬Ã¢â€â‚¬ Current month highlight Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 from datetime import datetime
 current_month = datetime.utcnow().month
 current_month_name = MONTHS[current_month - 1]
 
-st.info(f"ðŸ“… Current month: **{current_month_name}** â€” highlighting seasonal bias for all markets")
+st.info(f"Ã°Å¸â€œâ€¦ Current month: **{current_month_name}** Ã¢â‚¬â€ highlighting seasonal bias for all markets")
 
-# â”€â”€ Current month scorecard â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-st.subheader(f"ðŸŽ¯ {current_month_name} Seasonal Bias â€” All Markets")
+# Ã¢â€â‚¬Ã¢â€â‚¬ Current month scorecard Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
+st.subheader(f"Ã°Å¸Å½Â¯ {current_month_name} Seasonal Bias Ã¢â‚¬â€ All Markets")
 
 rows = []
 for sym, name in ALL_MARKETS.items():
     bias = SEASONALITY.get(sym, {}).get(current_month, 0.0)
-    signal = "ðŸŸ¢ Bullish" if bias > 0.5 else "ðŸ”´ Bearish" if bias < -0.5 else "âšª Neutral"
+    signal = "Ã°Å¸Å¸Â¢ Bullish" if bias > 0.5 else "Ã°Å¸â€Â´ Bearish" if bias < -0.5 else "Ã¢Å¡Âª Neutral"
     rows.append({"Symbol": sym, "Market": name, "Bias": round(bias, 2), "Signal": signal})
 
 df_month = pd.DataFrame(rows).sort_values("Bias", ascending=False)
@@ -47,7 +52,7 @@ df_month = pd.DataFrame(rows).sort_values("Bias", ascending=False)
 col_l, col_r = st.columns(2)
 with col_l:
     bulls = df_month[df_month["Bias"] > 0.5]
-    st.markdown(f"**ðŸŸ¢ Bullish ({len(bulls)})**")
+    st.markdown(f"**Ã°Å¸Å¸Â¢ Bullish ({len(bulls)})**")
     for _, row in bulls.iterrows():
         st.markdown(
             f'<div style="display:flex;justify-content:space-between;padding:4px 0;'
@@ -59,7 +64,7 @@ with col_l:
 with col_r:
     bears = df_month[df_month["Bias"] < -0.5]
     neuts = df_month[(df_month["Bias"] >= -0.5) & (df_month["Bias"] <= 0.5)]
-    st.markdown(f"**ðŸ”´ Bearish ({len(bears)})**")
+    st.markdown(f"**Ã°Å¸â€Â´ Bearish ({len(bears)})**")
     for _, row in bears.iterrows():
         st.markdown(
             f'<div style="display:flex;justify-content:space-between;padding:4px 0;'
@@ -68,7 +73,7 @@ with col_r:
             f'<span style="color:{BEAR_RED};font-weight:700">{row["Bias"]:.2f}</span></div>',
             unsafe_allow_html=True,
         )
-    st.markdown(f"**âšª Neutral ({len(neuts)})**")
+    st.markdown(f"**Ã¢Å¡Âª Neutral ({len(neuts)})**")
     for _, row in neuts.iterrows():
         st.markdown(
             f'<div style="display:flex;justify-content:space-between;padding:4px 0;'
@@ -80,8 +85,8 @@ with col_r:
 
 st.divider()
 
-# â”€â”€ Full heatmap â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-st.subheader("ðŸ—º Full Seasonality Heatmap")
+# Ã¢â€â‚¬Ã¢â€â‚¬ Full heatmap Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
+st.subheader("Ã°Å¸â€”Âº Full Seasonality Heatmap")
 
 symbols = list(ALL_MARKETS.keys())
 names   = list(ALL_MARKETS.values())
@@ -118,17 +123,17 @@ fig_heat.add_shape(
 fig_heat.update_layout(**{
     **PLOTLY_LAYOUT,
     "height": 550,
-    "title": "Monthly Seasonal Bias â€” All Markets (20yr avg)",
+    "title": "Monthly Seasonal Bias Ã¢â‚¬â€ All Markets (20yr avg)",
     "yaxis": {**PLOTLY_LAYOUT["yaxis"], "tickfont": {"size": 11}},
 })
 st.plotly_chart(fig_heat, use_container_width=True)
 
 st.divider()
 
-# â”€â”€ Per-market charts â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-st.subheader("ðŸ“Š Individual Market Seasonality")
+# Ã¢â€â‚¬Ã¢â€â‚¬ Per-market charts Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
+st.subheader("Ã°Å¸â€œÅ  Individual Market Seasonality")
 
-tabs = st.tabs(["ðŸ“ˆ Equities", "ðŸ… Commodities", "ðŸŒ¾ Agriculture"])
+tabs = st.tabs(["Ã°Å¸â€œË† Equities", "Ã°Å¸Ââ€¦ Commodities", "Ã°Å¸Å’Â¾ Agriculture"])
 
 for tab, markets in zip(tabs, [EQUITY_MARKETS, COMMODITY_MARKETS, AGRICULTURE_MARKETS]):
     with tab:
