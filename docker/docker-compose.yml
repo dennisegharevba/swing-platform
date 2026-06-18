@@ -1,0 +1,122 @@
+version: "3.9"
+
+services:
+  # ── Dashboard (Streamlit) ──────────────────────────────────────────────────
+  dashboard:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: cot_dashboard
+    restart: unless-stopped
+    ports:
+      - "8501:8501"
+    env_file:
+      - ../.env
+    volumes:
+      - platform_data:/app/data
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - platform_net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8501/_stcore/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # ── Scheduler (automated scans) ───────────────────────────────────────────
+  scheduler:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: cot_scheduler
+    restart: unless-stopped
+    command: ["python", "-m", "src.cli", "scheduler"]
+    env_file:
+      - ../.env
+    volumes:
+      - platform_data:/app/data
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - platform_net
+
+  # ── Telegram Bot ──────────────────────────────────────────────────────────
+  telegram_bot:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: cot_telegram
+    restart: unless-stopped
+    command: ["python", "-m", "src.cli", "bot"]
+    env_file:
+      - ../.env
+    volumes:
+      - platform_data:/app/data
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - platform_net
+
+  # ── PostgreSQL ────────────────────────────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    container_name: cot_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: swing_platform
+      POSTGRES_USER: swing
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-swing_secure_pass}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - platform_net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U swing -d swing_platform"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── Redis ─────────────────────────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: cot_redis
+    restart: unless-stopped
+    command: redis-server --maxmemory 256mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis_data:/data
+    networks:
+      - platform_net
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  # ── Nginx reverse proxy ───────────────────────────────────────────────────
+  nginx:
+    image: nginx:alpine
+    container_name: cot_nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - dashboard
+    networks:
+      - platform_net
+
+volumes:
+  platform_data:
+  postgres_data:
+  redis_data:
+
+networks:
+  platform_net:
+    driver: bridge
