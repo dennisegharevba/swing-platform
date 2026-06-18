@@ -1,15 +1,5 @@
-from __future__ import annotations
-import sys, os
-for _p in ['/mount/src/swing-platform', os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))]:
-    if os.path.exists(_p) and _p not in sys.path:
-        sys.path.insert(0, _p)
-
-import sys, os
-for _p in ['/mount/src/swing-platform', os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))]:
-    if os.path.exists(_p) and _p not in sys.path:
-        sys.path.insert(0, _p)
-
-"""COT Dashboard Ã¢â‚¬â€ Commitments of Traders analysis for all markets."""
+import sys
+sys.path.insert(0, "/mount/src/swing-platform")
 
 import asyncio
 
@@ -25,8 +15,8 @@ from src.dashboard.helpers import (
 )
 
 apply_theme()
-st.title("Ã°Å¸â€œÅ  COT Dashboard")
-st.caption("CFTC Commitments of Traders Ã¢â‚¬â€ Commercial positioning percentile (3yr lookback)")
+st.title("ÃƒÂ°Ã…Â¸Ã¢â‚¬Å“Ã…Â  COT Dashboard")
+st.caption("CFTC Commitments of Traders ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Commercial positioning percentile (3yr lookback)")
 
 
 @st.cache_data(ttl=3600, show_spinner=False)
@@ -41,11 +31,11 @@ def load_cot_all() -> dict:
     return async_run(_fetch_all())
 
 
-with st.spinner("Fetching COT data from CFTCÃ¢â‚¬Â¦"):
+with st.spinner("Fetching COT data from CFTCÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦"):
     cot_data = load_cot_all()
 
-# Ã¢â€â‚¬Ã¢â€â‚¬ COT Index scoreboard Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
-st.subheader("Ã°Å¸Å½Â¯ COT Index Scoreboard")
+# ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ COT Index scoreboard ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬
+st.subheader("ÃƒÂ°Ã…Â¸Ã…Â½Ã‚Â¯ COT Index Scoreboard")
 st.caption("Commercial net position as percentile rank over 3-year rolling window. >70 = bullish, <30 = bearish")
 
 cols = st.columns(4)
@@ -61,7 +51,7 @@ for i, (sym, name) in enumerate(ALL_MARKETS.items()):
     with col:
         if idx_val is not None:
             color = BULL_GREEN if idx_val >= 70 else BEAR_RED if idx_val <= 30 else GOLD
-            signal = "Ã°Å¸Å¸Â¢ BULLISH" if idx_val >= 70 else "Ã°Å¸â€Â´ BEARISH" if idx_val <= 30 else "Ã¢Å¡Âª NEUTRAL"
+            signal = "ÃƒÂ°Ã…Â¸Ã…Â¸Ã‚Â¢ BULLISH" if idx_val >= 70 else "ÃƒÂ°Ã…Â¸Ã¢â‚¬ÂÃ‚Â´ BEARISH" if idx_val <= 30 else "ÃƒÂ¢Ã…Â¡Ã‚Âª NEUTRAL"
             st.markdown(
                 f"""<div style="background:#1a1d26;border:1px solid #2a2d3a;border-radius:10px;
                 padding:12px;margin-bottom:8px;text-align:center;">
@@ -83,12 +73,12 @@ for i, (sym, name) in enumerate(ALL_MARKETS.items()):
 
 st.divider()
 
-# Ã¢â€â‚¬Ã¢â€â‚¬ Individual market deep dive Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
-st.subheader("Ã°Å¸â€Â¬ Market Deep Dive")
+# ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ Individual market deep dive ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬
+st.subheader("ÃƒÂ°Ã…Â¸Ã¢â‚¬ÂÃ‚Â¬ Market Deep Dive")
 selected = st.selectbox(
     "Select Market",
     options=list(ALL_MARKETS.keys()),
-    format_func=lambda x: f"{x} Ã¢â‚¬â€ {ALL_MARKETS[x]}",
+    format_func=lambda x: f"{x} ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â {ALL_MARKETS[x]}",
 )
 
 df_sel = cot_data.get(selected, pd.DataFrame())
@@ -96,7 +86,7 @@ if df_sel.empty:
     st.warning(f"No COT data available for {selected}. CFTC data may be loading.")
     st.stop()
 
-tab1, tab2, tab3 = st.tabs(["Ã°Å¸â€œË† COT Index", "Ã°Å¸â€œÅ  Positions", "Ã°Å¸â€â€ž Weekly Changes"])
+tab1, tab2, tab3 = st.tabs(["ÃƒÂ°Ã…Â¸Ã¢â‚¬Å“Ã‹â€  COT Index", "ÃƒÂ°Ã…Â¸Ã¢â‚¬Å“Ã…Â  Positions", "ÃƒÂ°Ã…Â¸Ã¢â‚¬ÂÃ¢â‚¬Å¾ Weekly Changes"])
 
 with tab1:
     fig = cot_index_chart(df_sel, selected)
@@ -109,7 +99,7 @@ with tab1:
         c1.metric("Current", f"{s.iloc[-1]:.1f}")
         c2.metric("4-Week Avg", f"{s.tail(4).mean():.1f}")
         c3.metric("13-Week Avg", f"{s.tail(13).mean():.1f}")
-        c4.metric("52-Week Range", f"{s.tail(52).min():.0f}Ã¢â‚¬â€œ{s.tail(52).max():.0f}")
+        c4.metric("52-Week Range", f"{s.tail(52).min():.0f}ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Å“{s.tail(52).max():.0f}")
 
 with tab2:
     if "comm_long" in df_sel.columns and "comm_short" in df_sel.columns:
@@ -138,14 +128,14 @@ with tab3:
         fig3.add_trace(go.Bar(x=df_chg.index, y=df_chg["comm_short_chg"],
                               name="Short Change", marker_color=BEAR_RED, opacity=0.8))
         fig3.update_layout(**{**PLOTLY_LAYOUT, "height": 350, "barmode": "group",
-                               "title": f"{ALL_MARKETS[selected]} Ã¢â‚¬â€ Weekly COT Position Changes"})
+                               "title": f"{ALL_MARKETS[selected]} ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Weekly COT Position Changes"})
         st.plotly_chart(fig3, use_container_width=True)
     else:
         st.info("Weekly change data unavailable.")
 
 st.divider()
-st.caption("COT data source: CFTC Disaggregated Futures-Only Report Ã‚Â· Released every Friday 15:30 ET")
-if st.button("Ã°Å¸â€â€ž Refresh COT Data"):
+st.caption("COT data source: CFTC Disaggregated Futures-Only Report Ãƒâ€šÃ‚Â· Released every Friday 15:30 ET")
+if st.button("ÃƒÂ°Ã…Â¸Ã¢â‚¬ÂÃ¢â‚¬Å¾ Refresh COT Data"):
     from src.data.market_data import _cot_cache
     _cot_cache.clear()
     st.cache_data.clear()
