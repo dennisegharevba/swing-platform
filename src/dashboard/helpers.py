@@ -324,3 +324,4 @@ def render_signal_card(sig: Any) -> None:
     </div>
     """
     st.markdown(html, unsafe_allow_html=True)
+
