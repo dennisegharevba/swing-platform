@@ -1,9 +1,25 @@
 ﻿import sys
 import os
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+os.environ.setdefault('DATABASE_URL', 'sqlite+aiosqlite:///./data/platform.db')
 
-import streamlit as st
+import asyncio
+import concurrent.futures
 from pathlib import Path
+import streamlit as st
+
+# Initialise database tables on startup
+def init_db():
+    async def _init():
+        from src.core.database import create_tables
+        await create_tables()
+    with concurrent.futures.ThreadPoolExecutor(max_workers=1) as pool:
+        pool.submit(asyncio.run, _init()).result(timeout=30)
+
+try:
+    init_db()
+except Exception as e:
+    st.warning(f"DB init: {e}")
 
 st.set_page_config(
     page_title="COT Intelligence Platform",
