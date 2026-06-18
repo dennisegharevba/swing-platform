@@ -1,8 +1,11 @@
+import sys, os
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+
 """
 Signal Scoring Engine
 =====================
 Implements the validated research model exactly as specified.
-Scores every market from 0–100 across five components.
+Scores every market from 0â€“100 across five components.
 No parameter changes.  No new filters.
 """
 from __future__ import annotations
@@ -39,11 +42,11 @@ from loguru import logger
 
 @dataclass
 class ComponentScores:
-    commercial_cot: float = 0.0       # 0–35
-    seasonality: float = 0.0          # 0–25
-    macro_regime: float = 0.0         # 0–20
-    trend_alignment: float = 0.0      # 0–10
-    momentum: float = 0.0             # 0–10
+    commercial_cot: float = 0.0       # 0â€“35
+    seasonality: float = 0.0          # 0â€“25
+    macro_regime: float = 0.0         # 0â€“20
+    trend_alignment: float = 0.0      # 0â€“10
+    momentum: float = 0.0             # 0â€“10
 
     @property
     def total(self) -> float:
@@ -112,9 +115,9 @@ class SignalResult:
 def score_commercial_cot(cot_index: float | None, direction: Direction) -> float:
     """
     Commercial COT score (max 35 pts).
-    COT index 0–100: >70 = heavy commercial buying (bullish for price).
-    For longs: high COT index → high score.
-    For shorts: low COT index → high score.
+    COT index 0â€“100: >70 = heavy commercial buying (bullish for price).
+    For longs: high COT index â†’ high score.
+    For shorts: low COT index â†’ high score.
     """
     if cot_index is None:
         return 0.0
@@ -122,7 +125,7 @@ def score_commercial_cot(cot_index: float | None, direction: Direction) -> float
     w = SCORE_WEIGHTS["commercial_cot"]  # 35
 
     if direction == Direction.LONG:
-        # COT index 70–100 maps to full score; 0–30 maps to near zero
+        # COT index 70â€“100 maps to full score; 0â€“30 maps to near zero
         normalized = max(0.0, (cot_index - 30) / 70)
     else:
         # Inverted: low COT index (heavy commercial shorting) is bearish signal
@@ -140,7 +143,7 @@ def score_seasonality(symbol: str, direction: Direction, month: int) -> float:
     bias = SEASONALITY.get(symbol, {}).get(month, 0.0)
 
     # Scale: bias range roughly -1.5 to +1.5
-    # We map [0, 1.5] → [0, 25] for the favoured direction
+    # We map [0, 1.5] â†’ [0, 25] for the favoured direction
     if direction == Direction.LONG:
         normalized = max(0.0, bias / 1.5)
     else:
@@ -157,7 +160,7 @@ def score_macro_regime_equity(
     Equity macro score (max 20 pts).
     Uses VIX (hard override already applied) + US10Y vs 200-MA.
     VIX < 20: full points.  VIX 20-35: partial.
-    US10Y: below MA → bullish equity; above MA → bearish equity.
+    US10Y: below MA â†’ bullish equity; above MA â†’ bearish equity.
     """
     w = SCORE_WEIGHTS["macro_regime"]  # 20
     score = 0.0
@@ -192,7 +195,7 @@ def score_macro_regime_commodity(
 ) -> float:
     """
     Commodity macro score (max 20 pts).
-    DXY regime: bearish DXY → bullish commodities.
+    DXY regime: bearish DXY â†’ bullish commodities.
     Real yield filter applied to Gold/Silver only.
     """
     w = SCORE_WEIGHTS["macro_regime"]  # 20
@@ -208,7 +211,7 @@ def score_macro_regime_commodity(
     else:
         score += 3
 
-    # Real yield component — Gold/Silver only (up to 6 pts)
+    # Real yield component â€” Gold/Silver only (up to 6 pts)
     if symbol in REAL_YIELD_MARKETS:
         if direction == Direction.LONG and not regime.real_yield_rising:
             score += 6   # falling real yields = bullish gold/silver
@@ -344,7 +347,7 @@ def determine_direction(
     elif cot_index <= 40:
         cot_dir = Direction.SHORT
     else:
-        # Ambiguous COT — use seasonality as tiebreaker
+        # Ambiguous COT â€” use seasonality as tiebreaker
         if season_bias > 0.3:
             cot_dir = Direction.LONG
         elif season_bias < -0.3:
@@ -355,7 +358,7 @@ def determine_direction(
     # Apply hard regime overrides for equities
     if asset_class == AssetClass.EQUITY:
         if cot_dir == Direction.LONG and regime.us10y_above_ma:
-            # Unfavourable but not blocked — weaken signal via scoring
+            # Unfavourable but not blocked â€” weaken signal via scoring
             pass
         if cot_dir == Direction.SHORT and not regime.us10y_above_ma:
             pass
@@ -396,9 +399,9 @@ async def score_market(
     name = ALL_MARKETS.get(symbol, symbol)
     month = datetime.utcnow().month
 
-    # VIX hard override — no new positions at all
+    # VIX hard override â€” no new positions at all
     if regime.vix_override:
-        logger.info("VIX override ({:.1f}) — skipping {}", regime.vix, symbol)
+        logger.info("VIX override ({:.1f}) â€” skipping {}", regime.vix, symbol)
         return None
 
     # Enrich price data
@@ -450,7 +453,7 @@ async def score_market(
 
     if not result.passes_threshold:
         logger.debug(
-            "{} score {:.1f} below threshold — skipping",
+            "{} score {:.1f} below threshold â€” skipping",
             symbol, result.score,
         )
         return None

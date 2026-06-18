@@ -1,3 +1,6 @@
+import sys, os
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+
 """
 Market Scanner
 ==============
@@ -81,7 +84,7 @@ async def scan_universe(
         }
         symbols = list(all_markets.keys())
 
-    logger.info("Starting scan — {} markets", len(symbols))
+    logger.info("Starting scan ??? {} markets", len(symbols))
 
     # Fetch regime first (shared across all markets)
     try:
@@ -122,7 +125,7 @@ async def scan_universe(
         ac = asset_class_map[sym]
         df = price_data.get(sym)
         if df is None or df.empty:
-            logger.warning("No price data for {} — skipping", sym)
+            logger.warning("No price data for {} ??? skipping", sym)
             continue
         tasks.append(score_market(sym, ac, df, regime))
 
@@ -146,7 +149,7 @@ async def scan_universe(
 
     duration = time.perf_counter() - start
     logger.info(
-        "Scan complete — {}/{} signals in {:.1f}s",
+        "Scan complete ??? {}/{} signals in {:.1f}s",
         len(valid_signals), len(symbols), duration,
     )
 
@@ -168,3 +171,4 @@ async def scan_commodities() -> ScanResult:
 
 async def scan_agriculture() -> ScanResult:
     return await scan_universe(symbols=list(AGRICULTURE_MARKETS.keys()))
+
