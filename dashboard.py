@@ -1,19 +1,9 @@
-"""
-Streamlit Dashboard — Main Entry Point
-=======================================
-Multi-page institutional dashboard for the Swing Trading Platform.
-Run: streamlit run dashboard.py
-"""
-from __future__ import annotations
-
-import asyncio
-import sys
-from pathlib import Path
-
-# Ensure project root is on path
-sys.path.insert(0, str(Path(__file__).resolve().parent))
+﻿import sys
+import os
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import streamlit as st
+from pathlib import Path
 
 st.set_page_config(
     page_title="COT Intelligence Platform",
@@ -22,7 +12,6 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-# ── Sidebar navigation ────────────────────────────────────────────────────────
 PAGES = {
     "🏠 Overview":              "src/dashboard/pages/overview.py",
     "💼 Portfolio":             "src/dashboard/pages/portfolio.py",
@@ -45,7 +34,6 @@ with st.sidebar:
     st.divider()
     st.caption("v1.0.0 · Production")
 
-# ── Load selected page ────────────────────────────────────────────────────────
 page_path = Path(PAGES[selection])
 if page_path.exists():
     with open(page_path) as f:
