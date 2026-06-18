@@ -2,7 +2,7 @@
 Platform Configuration
 ======================
 Central configuration loaded from environment variables via pydantic-settings.
-All downstream modules import from here — never read env vars directly.
+All downstream modules import from here â€” never read env vars directly.
 """
 from __future__ import annotations
 
@@ -89,7 +89,7 @@ YAHOO_TICKERS: dict[str, str] = {
     "TIPS10Y": "DFII10",  # FRED series
 }
 
-# COT (CFTC) report codes — Commitments of Traders
+# COT (CFTC) report codes â€” Commitments of Traders
 COT_CODES: dict[str, str] = {
     "NQ": "209742",
     "ES": "13874A",
@@ -126,7 +126,7 @@ SEASONALITY: dict[str, dict[int, float]] = {
 
 
 # ---------------------------------------------------------------------------
-# Scoring weights (fixed — do not modify)
+# Scoring weights (fixed â€” do not modify)
 # ---------------------------------------------------------------------------
 
 SCORE_WEIGHTS: dict[str, int] = {
