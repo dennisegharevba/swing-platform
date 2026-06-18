@@ -20,10 +20,10 @@ from loguru import logger
 
 def _banner() -> None:
     print("""
-â•”â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•—
-â•‘      COT Intelligence â€” Institutional Swing Platform  â•‘
-â•‘      v1.0.0 Â· Production Ready                        â•‘
-â•šâ•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+╔══════════════════════════════════════════════════════╗
+║      COT Intelligence — Institutional Swing Platform  ║
+║      v1.0.0 · Production Ready                        ║
+╚══════════════════════════════════════════════════════╝
 """)
 
 
@@ -46,7 +46,7 @@ async def cmd_scan(subset: str = "all") -> None:
         result = await scan_universe()
 
     print(f"\n{'='*60}")
-    print(f"SCAN COMPLETE â€” {len(result.signals)} signals found")
+    print(f"SCAN COMPLETE — {len(result.signals)} signals found")
     print(f"VIX: {result.regime.vix:.2f} | DXY: {result.regime.dxy_regime} | "
           f"US10Y: {result.regime.us10y_regime}")
     print(f"{'='*60}")
@@ -100,7 +100,7 @@ async def cmd_scan(subset: str = "all") -> None:
 async def cmd_bot() -> None:
     from src.alerts.telegram_bot import build_application
     app = build_application()
-    print("Starting Telegram bot (polling mode)â€¦")
+    print("Starting Telegram bot (polling mode)…")
     await app.run_polling()
 
 

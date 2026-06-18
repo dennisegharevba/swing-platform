@@ -23,7 +23,7 @@ def setup_logging() -> None:
     fmt = (
         "<green>{time:YYYY-MM-DD HH:mm:ss}</green> | "
         "<level>{level: <8}</level> | "
-        "<cyan>{name}</cyan>:<cyan>{line}</cyan> â€” <level>{message}</level>"
+        "<cyan>{name}</cyan>:<cyan>{line}</cyan> — <level>{message}</level>"
     )
 
     # Console
@@ -51,7 +51,7 @@ def setup_logging() -> None:
         enqueue=True,
     )
 
-    logger.info("Logging initialised â€” level={}", settings.log_level)
+    logger.info("Logging initialised — level={}", settings.log_level)
 
 
 setup_logging()

@@ -1,3 +1,6 @@
+import sys
+sys.path.insert(0, "/mount/src/swing-platform")
+
 """
 Dashboard Helpers
 =================
@@ -324,4 +327,3 @@ def render_signal_card(sig: Any) -> None:
     </div>
     """
     st.markdown(html, unsafe_allow_html=True)
-

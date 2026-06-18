@@ -1,33 +1,19 @@
-import sys
-import os
-
-# Must be first — fixes module resolution on Streamlit Cloud
-_root = os.path.dirname(os.path.abspath(__file__))
-if _root not in sys.path:
-    sys.path.insert(0, _root)
-
-# Also add the mount path used by Streamlit Cloud
-for _p in ['/mount/src/swing-platform', '/app', _root]:
-    if os.path.exists(_p) and _p not in sys.path:
-        sys.path.insert(0, _p)
+"""
+Streamlit Dashboard — Main Entry Point
+=======================================
+Multi-page institutional dashboard for the Swing Trading Platform.
+Run: streamlit run dashboard.py
+"""
+from __future__ import annotations
 
 import asyncio
-import concurrent.futures
+import sys
 from pathlib import Path
+
+# Ensure project root is on path
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+
 import streamlit as st
-
-# Init database
-def _init_db():
-    async def _run():
-        from src.core.database import create_tables
-        await create_tables()
-    with concurrent.futures.ThreadPoolExecutor(max_workers=1) as p:
-        p.submit(asyncio.run, _run()).result(timeout=30)
-
-try:
-    _init_db()
-except Exception as _e:
-    pass
 
 st.set_page_config(
     page_title="COT Intelligence Platform",
@@ -36,6 +22,7 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
+# ── Sidebar navigation ────────────────────────────────────────────────────────
 PAGES = {
     "🏠 Overview":              "src/dashboard/pages/overview.py",
     "💼 Portfolio":             "src/dashboard/pages/portfolio.py",
@@ -58,9 +45,10 @@ with st.sidebar:
     st.divider()
     st.caption("v1.0.0 · Production")
 
+# ── Load selected page ────────────────────────────────────────────────────────
 page_path = Path(PAGES[selection])
 if page_path.exists():
     with open(page_path) as f:
-        exec(compile(f.read(), str(page_path), "exec"), {"__name__": "__main__", "__file__": str(page_path)})
+        exec(compile(f.read(), str(page_path), "exec"), {"__name__": "__main__"})
 else:
     st.error(f"Page not found: {page_path}")

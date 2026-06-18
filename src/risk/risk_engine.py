@@ -1,8 +1,11 @@
+import sys
+sys.path.insert(0, "/mount/src/swing-platform")
+
 """
 Risk Management Engine
 ======================
 Computes entry, stop loss, TP1, TP2, ATR risk, and expected hold time
-for every qualifying signal.  No approximations ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â all values derived from
+for every qualifying signal.  No approximations — all values derived from
 live price data and validated parameters.
 """
 from __future__ import annotations
@@ -146,7 +149,7 @@ def attach_risk(signal: SignalResult) -> SignalResult:
 def compute_portfolio_cash_requirement(macro_score: float) -> float:
     """
     Return the required cash reserve percentage.
-    Macro score < 48 ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ 30% cash.  Otherwise ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ 15%.
+    Macro score < 48 → 30% cash.  Otherwise → 15%.
     """
     from src.core.config import get_settings
     s = get_settings()
@@ -163,6 +166,6 @@ def compute_aggregate_macro_score(signals: list[SignalResult]) -> float:
     if not signals:
         return 50.0
     macro_scores = [s.scores.macro_regime for s in signals]
-    # Normalise to 0ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Å“100 scale (macro max is 20)
+    # Normalise to 0–100 scale (macro max is 20)
     avg_macro = sum(macro_scores) / len(macro_scores)
     return round((avg_macro / 20) * 100, 1)
