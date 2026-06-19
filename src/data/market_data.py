@@ -165,18 +165,6 @@ async def fetch_real_yield():
 
 CFTC_COT_URL = "https://www.cftc.gov/files/dea/history/fut_disagg_txt_{year}.zip"
 
-COT_COLUMNS = {
-    "Market_and_Exchange_Names": "market",
-    "CFTC_Contract_Market_Code": "code",
-    "Comm_Positions_Long_All": "comm_long",
-    "Comm_Positions_Short_All": "comm_short",
-    "NonComm_Positions_Long_All": "noncomm_long",
-    "NonComm_Positions_Short_All": "noncomm_short",
-    "Open_Interest_All": "open_interest",
-    "Change_in_Comm_Long_All": "comm_long_chg",
-    "Change_in_Comm_Short_All": "comm_short_chg",
-}
-
 # CFTC has used a few different date-column names over time; check all of them
 DATE_COLUMN_CANDIDATES = [
     "Report_Date_as_MM_DD_YYYY",
@@ -184,6 +172,35 @@ DATE_COLUMN_CANDIDATES = [
     "Report_Date_as_YYYY_MM_DD",
     "As_of_Date_In_Form_YYMMDD",
 ]
+
+# This pulls the DISAGGREGATED report, which has 4 trader categories, not 2.
+# "comm_long/short" here maps to Producer/Merchant/Processor/User -- the closest
+# disaggregated analog to "commercial hedger" from the legacy report.
+# "noncomm_long/short" maps to Managed Money -- the closest analog to speculators.
+# Listed as candidate lists because CFTC's own files are inconsistently
+# capitalized (ALL vs All) across different years.
+COT_COLUMN_ALIASES = {
+    "market": ["Market_and_Exchange_Names"],
+    "comm_long": ["Prod_Merc_Positions_Long_ALL", "Prod_Merc_Positions_Long_All"],
+    "comm_short": ["Prod_Merc_Positions_Short_ALL", "Prod_Merc_Positions_Short_All"],
+    "noncomm_long": ["M_Money_Positions_Long_ALL", "M_Money_Positions_Long_All"],
+    "noncomm_short": ["M_Money_Positions_Short_ALL", "M_Money_Positions_Short_All"],
+    "open_interest": ["Open_Interest_All", "Open_Interest_ALL"],
+    "comm_long_chg": ["Change_in_Prod_Merc_Long_All", "Change_in_Prod_Merc_Long_ALL"],
+    "comm_short_chg": ["Change_in_Prod_Merc_Short_All", "Change_in_Prod_Merc_Short_ALL"],
+}
+
+
+def _resolve_columns(df, aliases):
+    """Case-insensitive match of conceptual field names to actual CFTC column names."""
+    lower_map = {c.lower(): c for c in df.columns}
+    resolved = {}
+    for target, candidates in aliases.items():
+        for cand in candidates:
+            if cand.lower() in lower_map:
+                resolved[lower_map[cand.lower()]] = target
+                break
+    return resolved
 
 
 async def _download_cot_year(year):
@@ -238,7 +255,14 @@ async def fetch_cot_data(symbol):
         )
         return pd.DataFrame()
 
-    available = {k: v for k, v in COT_COLUMNS.items() if k in df.columns}
+    available = _resolve_columns(df, COT_COLUMN_ALIASES)
+    if "comm_long" not in available.values() or "comm_short" not in available.values():
+        logger.error(
+            "COT data for {}: no recognized commercial position columns. Actual columns: {}",
+            symbol, list(df.columns),
+        )
+        return pd.DataFrame()
+
     df = df[[date_col] + list(available.keys())].rename(columns={**available, date_col: "date"})
 
     df["date"] = pd.to_datetime(df["date"], errors="coerce")
