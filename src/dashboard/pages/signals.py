@@ -1,9 +1,6 @@
 import sys
 sys.path.insert(0, "/mount/src/swing-platform")
 
-"""Signals Page — full signal list with price charts and detail drill-down."""
-from __future__ import annotations
-
 import streamlit as st
 
 from src.dashboard.helpers import (

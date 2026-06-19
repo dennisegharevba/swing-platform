@@ -1,9 +1,6 @@
 import sys
 sys.path.insert(0, "/mount/src/swing-platform")
 
-"""Portfolio Page — cash management, exposure, position sizing."""
-from __future__ import annotations
-
 import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st

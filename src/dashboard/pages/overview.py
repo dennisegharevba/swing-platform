@@ -1,9 +1,6 @@
 import sys
 sys.path.insert(0, "/mount/src/swing-platform")
 
-"""Overview Page — top-level market snapshot and quick signal summary."""
-from __future__ import annotations
-
 import streamlit as st
 from src.dashboard.helpers import (
     apply_theme, async_run, direction_badge, render_signal_card,

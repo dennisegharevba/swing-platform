@@ -1,9 +1,6 @@
 import sys
 sys.path.insert(0, "/mount/src/swing-platform")
 
-"""COT Dashboard — Commitments of Traders analysis for all markets."""
-from __future__ import annotations
-
 import asyncio
 
 import pandas as pd

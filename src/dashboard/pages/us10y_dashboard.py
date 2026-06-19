@@ -1,9 +1,6 @@
 import sys
 sys.path.insert(0, "/mount/src/swing-platform")
 
-"""US10Y Dashboard — 10-year yield regime for equity signals."""
-from __future__ import annotations
-
 import plotly.graph_objects as go
 import streamlit as st
 

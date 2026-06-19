@@ -1,9 +1,6 @@
 import sys
 sys.path.insert(0, "/mount/src/swing-platform")
 
-"""DXY Dashboard — US Dollar regime for commodity signals."""
-from __future__ import annotations
-
 import plotly.graph_objects as go
 import streamlit as st
 
