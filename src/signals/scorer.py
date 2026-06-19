@@ -1,29 +1,22 @@
 import sys
 sys.path.insert(0, "/mount/src/swing-platform")
 
-import math
+
 from dataclasses import dataclass, field
 from datetime import datetime
 
 import pandas as pd
 
 from src.core.config import (
-    AGRICULTURE_MARKETS,
     ALL_MARKETS,
     AssetClass,
-    COMMODITY_MARKETS,
     Direction,
-    EQUITY_MARKETS,
     REAL_YIELD_MARKETS,
     SCORE_THRESHOLDS,
     SCORE_WEIGHTS,
     SEASONALITY,
 )
-from src.data.market_data import (
-    MarketRegime,
-    enrich_ohlcv,
-    get_cot_index,
-)
+from src.data.market_data import MarketRegime, enrich_ohlcv, get_cot_index
 from loguru import logger
 
 
@@ -244,7 +237,6 @@ async def score_market(symbol, asset_class, df, regime):
     name = ALL_MARKETS.get(symbol, symbol)
     month = datetime.utcnow().month
     if regime.vix_override:
-        logger.info("VIX override ({:.1f}) — skipping {}", regime.vix, symbol)
         return None
     df_enriched = enrich_ohlcv(df) if not df.empty else df
     cot_index = await get_cot_index(symbol)

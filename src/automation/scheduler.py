@@ -1,15 +1,6 @@
 import sys
 sys.path.insert(0, "/mount/src/swing-platform")
 
-"""
-Automation Scheduler
-====================
-APScheduler-based job runner.
-Daily scan at configured time.
-Weekly COT scan on Friday after 16:00 ET.
-"""
-from __future__ import annotations
-
 import asyncio
 from datetime import datetime
 
@@ -18,41 +9,35 @@ from apscheduler.triggers.cron import CronTrigger
 from loguru import logger
 
 from src.core.config import get_settings
-from src.core.database import AsyncSessionLocal, ScanLog, create_tables
-from src.signals.scanner import scan_universe
 
 settings = get_settings()
 
 
-async def run_daily_scan() -> None:
-    """Daily automated scan — sends top alerts."""
+async def run_daily_scan():
     logger.info("=== DAILY SCAN STARTING ===")
     started = datetime.utcnow()
+    from src.core.database import AsyncSessionLocal, ScanLog
     log = ScanLog(scan_type="daily", started_at=started)
     alerts_sent = 0
     error_msg = None
 
     try:
+        from src.signals.scanner import scan_universe
         result = await scan_universe()
         log.symbols_scanned = 13
         log.signals_found = len(result.signals)
 
-        # Send alerts
         from src.alerts.telegram_bot import send_scan_summary, send_signal_alert
-
         await send_scan_summary(result)
         for sig in result.top_signals[:3]:
             await send_signal_alert(sig)
             alerts_sent += 1
 
-        # Persist signals to database
         async with AsyncSessionLocal() as session:
             from src.core.database import SignalRecord
-
             for sig in result.signals:
                 record = SignalRecord(
-                    symbol=sig.symbol,
-                    name=sig.name,
+                    symbol=sig.symbol, name=sig.name,
                     asset_class=sig.asset_class.value,
                     direction=sig.direction.value,
                     score=sig.score,
@@ -95,76 +80,43 @@ async def run_daily_scan() -> None:
         except Exception as db_exc:
             logger.error("Failed to persist scan log: {}", db_exc)
 
-    logger.info(
-        "=== DAILY SCAN COMPLETE: {} signals, {} alerts ===",
-        log.signals_found,
-        log.alerts_sent,
-    )
+    logger.info("=== DAILY SCAN COMPLETE ===")
 
 
-async def run_weekly_cot_scan() -> None:
-    """
-    Weekly COT scan — runs Friday after COT data release.
-    Full analysis including fresh COT download.
-    """
+async def run_weekly_cot_scan():
     logger.info("=== WEEKLY COT SCAN STARTING ===")
-    # Clear COT cache to force fresh download
     from src.data.market_data import _cot_cache
     _cot_cache.clear()
-    logger.info("COT cache cleared — fetching fresh CFTC data")
     await run_daily_scan()
 
 
-def create_scheduler() -> AsyncIOScheduler:
-    """Build and return configured APScheduler instance."""
+def create_scheduler():
     tz = "America/New_York"
     scheduler = AsyncIOScheduler(timezone=tz)
 
-    # Daily scan
     scheduler.add_job(
         run_daily_scan,
-        CronTrigger(
-            hour=settings.daily_scan_hour,
-            minute=settings.daily_scan_minute,
-            timezone=tz,
-        ),
-        id="daily_scan",
-        name="Daily Market Scan",
-        replace_existing=True,
+        CronTrigger(hour=settings.daily_scan_hour, minute=settings.daily_scan_minute, timezone=tz),
+        id="daily_scan", name="Daily Market Scan", replace_existing=True,
     )
 
-    # Weekly COT scan — Friday 16:00 ET (after CFTC release)
     scheduler.add_job(
         run_weekly_cot_scan,
-        CronTrigger(
-            day_of_week=settings.weekly_cot_day,
-            hour=settings.weekly_cot_hour,
-            minute=0,
-            timezone=tz,
-        ),
-        id="weekly_cot_scan",
-        name="Weekly COT Scan",
-        replace_existing=True,
+        CronTrigger(day_of_week=settings.weekly_cot_day, hour=settings.weekly_cot_hour, minute=0, timezone=tz),
+        id="weekly_cot_scan", name="Weekly COT Scan", replace_existing=True,
     )
 
-    logger.info(
-        "Scheduler configured — daily={}:{:02d}, COT=Friday {}:00 ET",
-        settings.daily_scan_hour,
-        settings.daily_scan_minute,
-        settings.weekly_cot_hour,
-    )
     return scheduler
 
 
-async def start_scheduler() -> None:
-    """Initialise DB tables and start the scheduler loop."""
+async def start_scheduler():
+    from src.core.database import create_tables
     await create_tables()
     scheduler = create_scheduler()
     scheduler.start()
-    logger.info("Scheduler running. Press Ctrl+C to stop.")
+    logger.info("Scheduler running.")
     try:
         while True:
             await asyncio.sleep(60)
     except (KeyboardInterrupt, SystemExit):
         scheduler.shutdown()
-        logger.info("Scheduler stopped.")

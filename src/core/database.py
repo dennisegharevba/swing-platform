@@ -1,27 +1,10 @@
 import sys
 sys.path.insert(0, "/mount/src/swing-platform")
 
-"""
-Database Layer
-==============
-SQLAlchemy 2.0 async ORM.  Supports SQLite (default) and PostgreSQL.
-"""
-from __future__ import annotations
 
-import enum
 from datetime import datetime
 
-from sqlalchemy import (
-    Boolean,
-    DateTime,
-    Enum,
-    Float,
-    ForeignKey,
-    Integer,
-    String,
-    Text,
-    func,
-)
+from sqlalchemy import DateTime, Float, ForeignKey, Integer, String, Text, func, Boolean
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
@@ -33,29 +16,17 @@ engine = create_async_engine(
     settings.database_url,
     echo=False,
     pool_pre_ping=True,
-    connect_args={"check_same_thread": False}
-    if "sqlite" in settings.database_url
-    else {},
+    connect_args={"check_same_thread": False} if "sqlite" in settings.database_url else {},
 )
 
-AsyncSessionLocal = async_sessionmaker(
-    engine,
-    class_=AsyncSession,
-    expire_on_commit=False,
-)
+AsyncSessionLocal = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 
 
 class Base(DeclarativeBase):
     pass
 
 
-# ---------------------------------------------------------------------------
-# ORM Models
-# ---------------------------------------------------------------------------
-
 class SignalRecord(Base):
-    """Persisted signal snapshot from each scan."""
-
     __tablename__ = "signals"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
@@ -81,24 +52,16 @@ class SignalRecord(Base):
     atr_risk_pct: Mapped[float] = mapped_column(Float, nullable=True)
     expected_hold_days: Mapped[int] = mapped_column(Integer, nullable=True)
     alert_sent: Mapped[bool] = mapped_column(Boolean, default=False)
-    scanned_at: Mapped[datetime] = mapped_column(
-        DateTime, server_default=func.now(), nullable=False
-    )
+    scanned_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now(), nullable=False)
 
-    trades: Mapped[list["TradeRecord"]] = relationship(
-        "TradeRecord", back_populates="signal", lazy="select"
-    )
+    trades: Mapped[list["TradeRecord"]] = relationship("TradeRecord", back_populates="signal", lazy="select")
 
 
 class TradeRecord(Base):
-    """Tracks active and historical trades."""
-
     __tablename__ = "trades"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
-    signal_id: Mapped[int] = mapped_column(
-        Integer, ForeignKey("signals.id"), nullable=False
-    )
+    signal_id: Mapped[int] = mapped_column(Integer, ForeignKey("signals.id"), nullable=False)
     symbol: Mapped[str] = mapped_column(String(10), nullable=False, index=True)
     direction: Mapped[str] = mapped_column(String(10), nullable=False)
     entry_price: Mapped[float] = mapped_column(Float, nullable=False)
@@ -118,8 +81,6 @@ class TradeRecord(Base):
 
 
 class MarketSnapshot(Base):
-    """Daily market data cache."""
-
     __tablename__ = "market_snapshots"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
@@ -136,8 +97,6 @@ class MarketSnapshot(Base):
 
 
 class ScanLog(Base):
-    """Audit log of every automated scan."""
-
     __tablename__ = "scan_logs"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
@@ -151,11 +110,7 @@ class ScanLog(Base):
     completed_at: Mapped[datetime] = mapped_column(DateTime, nullable=True)
 
 
-# ---------------------------------------------------------------------------
-# Helpers
-# ---------------------------------------------------------------------------
-
-async def get_db() -> AsyncSession:  # type: ignore[return]
+async def get_db():
     async with AsyncSessionLocal() as session:
         try:
             yield session
@@ -165,6 +120,6 @@ async def get_db() -> AsyncSession:  # type: ignore[return]
             raise
 
 
-async def create_tables() -> None:
+async def create_tables():
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
