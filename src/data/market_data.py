@@ -166,7 +166,6 @@ async def fetch_real_yield():
 CFTC_COT_URL = "https://www.cftc.gov/files/dea/history/fut_disagg_txt_{year}.zip"
 
 COT_COLUMNS = {
-   COT_COLUMNS = {
     "Market_and_Exchange_Names": "market",
     "CFTC_Contract_Market_Code": "code",
     "Comm_Positions_Long_All": "comm_long",
@@ -178,13 +177,13 @@ COT_COLUMNS = {
     "Change_in_Comm_Short_All": "comm_short_chg",
 }
 
+# CFTC has used a few different date-column names over time; check all of them
 DATE_COLUMN_CANDIDATES = [
     "Report_Date_as_MM_DD_YYYY",
     "Report_Date_as_YYYY-MM-DD",
     "Report_Date_as_YYYY_MM_DD",
     "As_of_Date_In_Form_YYMMDD",
 ]
-}
 
 
 async def _download_cot_year(year):
@@ -231,7 +230,7 @@ async def fetch_cot_data(symbol):
     if df.empty:
         return pd.DataFrame()
 
-   date_col = next((c for c in DATE_COLUMN_CANDIDATES if c in df.columns), None)
+    date_col = next((c for c in DATE_COLUMN_CANDIDATES if c in df.columns), None)
     if date_col is None:
         logger.error(
             "COT data for {}: no recognized date column. Actual columns: {}",
@@ -244,6 +243,7 @@ async def fetch_cot_data(symbol):
 
     df["date"] = pd.to_datetime(df["date"], errors="coerce")
     df = df.dropna(subset=["date"]).sort_values("date").set_index("date")
+    df["comm_net"] = df["comm_long"] - df["comm_short"]
 
     lookback = 156
     df["cot_index"] = (
@@ -321,5 +321,3 @@ async def fetch_market_regime():
         us10y_above_ma=us10y_above_ma,
         real_yield_rising=real_yield_rising,
     )
-
-fix CFTC date column detection
