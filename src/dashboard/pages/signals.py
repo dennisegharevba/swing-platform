@@ -6,16 +6,16 @@ import streamlit as st
 from src.dashboard.helpers import (
     BEAR_RED, BULL_GREEN, GOLD, PLOTLY_LAYOUT, TEXT_DIM, TEXT_PRIMARY,
     apply_theme, async_run, candlestick_chart, render_signal_card, score_gauge,
+    render_freshness_bar, get_cached_scan,
 )
 
 apply_theme()
 st.title("Signal Intelligence")
+render_freshness_bar("Signal scan")
 
 
-@st.cache_data(ttl=900, show_spinner=False)
 def get_scan():
-    from src.signals.scanner import scan_universe
-    return async_run(scan_universe())
+    return get_cached_scan()
 
 
 with st.spinner("Scanning markets..."):

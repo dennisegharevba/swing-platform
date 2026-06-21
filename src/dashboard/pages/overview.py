@@ -5,7 +5,7 @@ import streamlit as st
 from src.dashboard.helpers import (
     apply_theme, async_run, direction_badge, render_signal_card,
     score_color, BULL_GREEN, BEAR_RED, GOLD, TEXT_DIM, TEXT_PRIMARY,
-    PLOTLY_LAYOUT, ACCENT_BLUE,
+    PLOTLY_LAYOUT, ACCENT_BLUE, get_cached_scan, render_freshness_bar,
 )
 import plotly.graph_objects as go
 
@@ -13,12 +13,11 @@ apply_theme()
 
 st.title("COT Intelligence Platform")
 st.caption("Institutional Swing Trading - Real-Time Overview")
+render_freshness_bar("Market scan")
 
 
-@st.cache_data(ttl=900, show_spinner=False)
 def get_scan():
-    from src.signals.scanner import scan_universe
-    return async_run(scan_universe())
+    return get_cached_scan()
 
 
 with st.spinner("Running market scan..."):

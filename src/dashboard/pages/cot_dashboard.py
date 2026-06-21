@@ -17,7 +17,7 @@ st.title("COT Dashboard")
 st.caption("CFTC Commitments of Traders - Commercial positioning percentile (3yr lookback)")
 
 
-@st.cache_data(ttl=3600, show_spinner=False)
+@st.cache_data(ttl=1800, show_spinner=False)
 def load_cot_all():
     async def _fetch_all():
         from src.data.market_data import fetch_cot_data
@@ -31,6 +31,17 @@ def load_cot_all():
 
 with st.spinner("Fetching COT data from CFTC..."):
     cot_data = load_cot_all()
+
+# Show the actual latest report date found across all markets - removes any ambiguity
+_latest_dates = []
+for _sym, _df in cot_data.items():
+    if not _df.empty:
+        _latest_dates.append(_df.index.max())
+if _latest_dates:
+    _max_date = max(_latest_dates)
+    st.success(f"Latest CFTC report date in loaded data: {_max_date.strftime('%A, %B %d, %Y')}")
+else:
+    st.warning("No COT data loaded.")
 
 st.subheader("COT Index Scoreboard")
 st.caption("Commercial net position percentile rank over 3-year rolling window. >70 = bullish, <30 = bearish")

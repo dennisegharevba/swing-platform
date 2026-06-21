@@ -7,15 +7,16 @@ import streamlit as st
 
 from src.dashboard.helpers import (
     BEAR_RED, BULL_GREEN, GOLD, PLOTLY_LAYOUT, TEXT_DIM, TEXT_PRIMARY,
-    apply_theme, async_run,
+    apply_theme, async_run, render_freshness_bar,
 )
 
 apply_theme()
 st.title("VIX Dashboard")
 st.caption("CBOE Volatility Index - market fear gauge and position override rules")
+render_freshness_bar("VIX data")
 
 
-@st.cache_data(ttl=300, show_spinner=False)
+@st.cache_data(ttl=120, show_spinner=False)
 def load_vix():
     from src.data.market_data import fetch_price_data, enrich_ohlcv
     df = async_run(fetch_price_data("VIX", period="2y"))

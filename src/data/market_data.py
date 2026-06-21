@@ -248,6 +248,8 @@ async def get_cot_index(symbol):
     val = df["cot_index"].dropna()
     if val.empty:
         return None
+    latest_date = df.index.max()
+    logger.info("COT latest report date for {}: {}", symbol, latest_date.strftime("%Y-%m-%d"))
     return float(val.iloc[-1])
 
 

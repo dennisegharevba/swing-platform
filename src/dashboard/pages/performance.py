@@ -15,7 +15,7 @@ st.title("Performance Analytics")
 st.caption("Historical signal statistics from database")
 
 
-@st.cache_data(ttl=300)
+@st.cache_data(ttl=60)
 def load_signals_df():
     async def _q():
         from src.core.database import AsyncSessionLocal, SignalRecord, create_tables

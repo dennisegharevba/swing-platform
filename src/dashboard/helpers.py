@@ -229,3 +229,26 @@ def render_signal_card(sig):
     </div>
     """
     st.markdown(html, unsafe_allow_html=True)
+
+
+def render_freshness_bar(timestamp_label="Data as of"):
+    """Render a consistent live-data freshness indicator and manual refresh button."""
+    from datetime import datetime
+    col1, col2 = st.columns([4, 1])
+    with col1:
+        st.caption(f"{timestamp_label}: {datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')} UTC (page render time)")
+    with col2:
+        if st.button("Refresh Now", key=f"refresh_{timestamp_label}"):
+            st.cache_data.clear()
+            st.rerun()
+
+
+@st.cache_data(ttl=120, show_spinner=False)
+def get_cached_scan():
+    """
+    Single shared scan cache used by Overview, Portfolio, and Signals pages.
+    Ensures all pages show the exact same live data within the same 2-minute window,
+    rather than each page running its own independent scan at slightly different times.
+    """
+    from src.signals.scanner import scan_universe
+    return async_run(scan_universe())

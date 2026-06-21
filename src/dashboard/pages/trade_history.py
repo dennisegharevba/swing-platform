@@ -15,7 +15,7 @@ st.title("Trade History")
 st.caption("Complete audit trail of all generated signals")
 
 
-@st.cache_data(ttl=60)
+@st.cache_data(ttl=30)
 def load_history():
     async def _q():
         from src.core.database import AsyncSessionLocal, SignalRecord, create_tables

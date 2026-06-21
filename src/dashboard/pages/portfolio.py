@@ -7,17 +7,17 @@ import streamlit as st
 
 from src.dashboard.helpers import (
     ACCENT_BLUE, BEAR_RED, BULL_GREEN, GOLD, NEUTRAL_GREY, PLOTLY_LAYOUT,
-    TEXT_DIM, TEXT_PRIMARY, apply_theme, async_run, score_color,
+    TEXT_DIM, TEXT_PRIMARY, apply_theme, async_run, score_color, render_freshness_bar,
+    get_cached_scan,
 )
 
 apply_theme()
 st.title("Portfolio Management")
+render_freshness_bar("Portfolio scan")
 
 
-@st.cache_data(ttl=900, show_spinner=False)
 def get_scan():
-    from src.signals.scanner import scan_universe
-    return async_run(scan_universe())
+    return get_cached_scan()
 
 
 with st.spinner("Loading portfolio data..."):

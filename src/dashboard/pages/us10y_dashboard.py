@@ -6,15 +6,16 @@ import streamlit as st
 
 from src.dashboard.helpers import (
     BEAR_RED, BULL_GREEN, GOLD, PLOTLY_LAYOUT, TEXT_DIM, TEXT_PRIMARY,
-    apply_theme, async_run, candlestick_chart,
+    apply_theme, async_run, candlestick_chart, render_freshness_bar,
 )
 
 apply_theme()
 st.title("US10Y Dashboard")
 st.caption("US 10-Year Treasury Yield - regime filter for equity long/short signals")
+render_freshness_bar("US10Y data")
 
 
-@st.cache_data(ttl=900, show_spinner=False)
+@st.cache_data(ttl=120, show_spinner=False)
 def load_us10y():
     from src.data.market_data import fetch_us10y, enrich_ohlcv
     df = async_run(fetch_us10y())
@@ -65,7 +66,7 @@ st.divider()
 st.subheader("Real Yield (Gold / Silver Filter)")
 
 
-@st.cache_data(ttl=3600, show_spinner=False)
+@st.cache_data(ttl=1800, show_spinner=False)
 def load_real_yield():
     from src.data.market_data import fetch_real_yield
     return async_run(fetch_real_yield())
