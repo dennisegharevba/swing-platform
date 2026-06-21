@@ -2,166 +2,386 @@ import sys
 sys.path.insert(0, "/mount/src/swing-platform")
 
 
-from enum import Enum
-from functools import lru_cache
-from pathlib import Path
-from typing import ClassVar
+import asyncio
+import io
+import zipfile
+from datetime import date, timedelta
 
-from pydantic import field_validator
-from pydantic_settings import BaseSettings, SettingsConfigDict
+import httpx
+import numpy as np
+import pandas as pd
+import yfinance as yf
+from cachetools import TTLCache
+from loguru import logger
+from tenacity import retry, stop_after_attempt, wait_exponential
 
-ROOT_DIR = Path(__file__).resolve().parents[2]
-DATA_DIR = ROOT_DIR / "data"
-DATA_DIR.mkdir(exist_ok=True)
+from src.core.config import COT_CODES, EQUITY_MARKETS, YAHOO_TICKERS, get_settings
 
+settings = get_settings()
 
-class AssetClass(str, Enum):
-    EQUITY = "equity"
-    COMMODITY = "commodity"
-    AGRICULTURE = "agriculture"
-
-
-class Direction(str, Enum):
-    LONG = "long"
-    SHORT = "short"
-    NEUTRAL = "neutral"
+_price_cache = TTLCache(maxsize=200, ttl=settings.cache_ttl_seconds)
+_macro_cache = TTLCache(maxsize=50, ttl=settings.cache_ttl_seconds)
+_cot_cache = TTLCache(maxsize=30, ttl=settings.cache_ttl_seconds * 6)
 
 
-EQUITY_MARKETS = {
-    "NQ": "Nasdaq 100",
-    "ES": "S&P 500",
-    "YM": "Dow Jones",
-    "RTY": "Russell 2000",
+@retry(stop=stop_after_attempt(settings.max_retries), wait=wait_exponential(multiplier=1, min=2, max=15), reraise=True)
+def _fetch_yf_sync(ticker, period="2y", interval="1d"):
+    t = yf.Ticker(ticker)
+    df = t.history(period=period, interval=interval, auto_adjust=True)
+    if df.empty:
+        raise ValueError(f"Empty data for {ticker}")
+    df.index = pd.DatetimeIndex(df.index.date)
+    df.index.name = "date"
+    df = df[["Open", "High", "Low", "Close", "Volume"]].rename(columns=str.lower)
+    return df
+
+
+async def fetch_price_data(symbol, period="2y", interval="1d"):
+    cache_key = f"{symbol}:{period}:{interval}"
+    if cache_key in _price_cache:
+        return _price_cache[cache_key]
+
+    ticker = YAHOO_TICKERS.get(symbol, symbol)
+    try:
+        loop = asyncio.get_event_loop()
+        df = await loop.run_in_executor(None, _fetch_yf_sync, ticker, period, interval)
+        _price_cache[cache_key] = df
+        return df
+    except Exception as exc:
+        logger.error("Price fetch failed for {}: {}", symbol, exc)
+        return pd.DataFrame()
+
+
+async def fetch_multiple(symbols, period="2y"):
+    tasks = [fetch_price_data(sym, period) for sym in symbols]
+    results = await asyncio.gather(*tasks, return_exceptions=True)
+    out = {}
+    for sym, res in zip(symbols, results):
+        if isinstance(res, pd.DataFrame) and not res.empty:
+            out[sym] = res
+    return out
+
+
+def compute_atr(df, period=14):
+    h, l, c = df["high"], df["low"], df["close"]
+    prev_c = c.shift(1)
+    tr = pd.concat([h - l, (h - prev_c).abs(), (l - prev_c).abs()], axis=1).max(axis=1)
+    return tr.ewm(alpha=1 / period, adjust=False).mean()
+
+
+def compute_rsi(df, period=14):
+    delta = df["close"].diff()
+    gain = delta.clip(lower=0).ewm(alpha=1 / period, adjust=False).mean()
+    loss = (-delta.clip(upper=0)).ewm(alpha=1 / period, adjust=False).mean()
+    rs = gain / loss.replace(0, np.nan)
+    return 100 - (100 / (1 + rs))
+
+
+def compute_ma(series, period):
+    return series.rolling(period).mean()
+
+
+def enrich_ohlcv(df):
+    if df.empty:
+        return df
+    df = df.copy()
+    df["atr_14"] = compute_atr(df, 14)
+    df["ma_20"] = compute_ma(df["close"], 20)
+    df["ma_50"] = compute_ma(df["close"], 50)
+    df["ma_200"] = compute_ma(df["close"], 200)
+    df["rsi_14"] = compute_rsi(df, 14)
+    df["pct_change"] = df["close"].pct_change()
+    return df
+
+
+async def fetch_fred_series(series_id, limit=500):
+    if series_id in _macro_cache:
+        return _macro_cache[series_id]
+
+    api_key = settings.fred_api_key
+    if not api_key:
+        return pd.Series(dtype=float)
+
+    url = (
+        f"https://api.stlouisfed.org/fred/series/observations"
+        f"?series_id={series_id}&api_key={api_key}&file_type=json"
+        f"&observation_start={(date.today() - timedelta(days=limit)).isoformat()}"
+    )
+    try:
+        async with httpx.AsyncClient(timeout=settings.request_timeout) as client:
+            resp = await client.get(url)
+            resp.raise_for_status()
+            data = resp.json()
+        observations = data.get("observations", [])
+        s = pd.Series(
+            {obs["date"]: float(obs["value"]) for obs in observations if obs["value"] != "."},
+            dtype=float,
+        )
+        s.index = pd.to_datetime(s.index)
+        s = s.sort_index()
+        _macro_cache[series_id] = s
+        return s
+    except Exception as exc:
+        logger.error("FRED fetch failed for {}: {}", series_id, exc)
+        return pd.Series(dtype=float)
+
+
+async def fetch_vix():
+    df = await fetch_price_data("VIX")
+    if df.empty:
+        return 20.0
+    return float(df["close"].iloc[-1])
+
+
+async def fetch_dxy():
+    return await fetch_price_data("DXY", period="2y")
+
+
+async def fetch_us10y():
+    df = await fetch_price_data("US10Y", period="2y")
+    if not df.empty:
+        for col in ["open", "high", "low", "close"]:
+            if df[col].mean() > 15:
+                df[col] = df[col] / 10
+    return df
+
+
+async def fetch_real_yield():
+    s = await fetch_fred_series("DFII10", limit=60)
+    if len(s) < 25:
+        df = await fetch_price_data("TIP")
+        if df.empty:
+            return 0.0
+        recent = df["close"].dropna()
+        if len(recent) < 22:
+            return 0.0
+        chg = (recent.iloc[-1] - recent.iloc[-22]) / recent.iloc[-22]
+        return float(-chg * 100)
+
+    recent = s.dropna()
+    change_20d = float(recent.iloc[-1] - recent.iloc[-min(20, len(recent))])
+    return change_20d
+
+
+# --- CFTC COT data --------------------------------------------------------
+#
+# CFTC publishes COT data in different report "families" depending on the
+# market. Physical commodities (metals, energy, ags, softs) appear in the
+# Disaggregated report; equity index futures (and other financial futures)
+# appear in the separate Traders in Financial Futures (TFF) report. Each
+# report has its own URL and its own trader-category column names, so we
+# route each symbol to the right one based on whether it's in EQUITY_MARKETS.
+
+CFTC_DISAGG_URL = "https://www.cftc.gov/files/dea/history/fut_disagg_txt_{year}.zip"
+CFTC_TFF_URL = "https://www.cftc.gov/files/dea/history/fut_fin_txt_{year}.zip"
+
+# CFTC has used a few different date-column names over time; check all of them
+DATE_COLUMN_CANDIDATES = [
+    "Report_Date_as_MM_DD_YYYY",
+    "Report_Date_as_YYYY-MM-DD",
+    "Report_Date_as_YYYY_MM_DD",
+    "As_of_Date_In_Form_YYMMDD",
+]
+
+# Disaggregated report (physical commodities): 4 categories are Producer/
+# Merchant/Processor/User, Swap Dealers, Managed Money, Other Reportables.
+# "comm_long/short" maps to Producer/Merchant -- the closest disaggregated
+# analog to "commercial hedger" from the legacy report.
+# "noncomm_long/short" maps to Managed Money -- the closest analog to
+# legacy "non-commercial" speculators.
+# Listed as candidate lists because CFTC's own files are inconsistently
+# capitalized (ALL vs All) across different years.
+DISAGG_COLUMN_ALIASES = {
+    "market": ["Market_and_Exchange_Names"],
+    "comm_long": ["Prod_Merc_Positions_Long_ALL", "Prod_Merc_Positions_Long_All"],
+    "comm_short": ["Prod_Merc_Positions_Short_ALL", "Prod_Merc_Positions_Short_All"],
+    "noncomm_long": ["M_Money_Positions_Long_ALL", "M_Money_Positions_Long_All"],
+    "noncomm_short": ["M_Money_Positions_Short_ALL", "M_Money_Positions_Short_All"],
+    "open_interest": ["Open_Interest_All", "Open_Interest_ALL"],
+    "comm_long_chg": ["Change_in_Prod_Merc_Long_All", "Change_in_Prod_Merc_Long_ALL"],
+    "comm_short_chg": ["Change_in_Prod_Merc_Short_All", "Change_in_Prod_Merc_Short_ALL"],
 }
 
-COMMODITY_MARKETS = {
-    "GC": "Gold",
-    "SI": "Silver",
-    "HG": "Copper",
-    "CL": "Crude Oil",
+# Traders in Financial Futures report (equity index, rates, FX, etc.): 4
+# categories are Dealer/Intermediary, Asset Manager/Institutional, Leveraged
+# Funds, Other Reportables. There is no "commercial" hedger category here
+# (no physical commodity to hedge), so this is an interpretive mapping:
+# "comm_long/short" -> Asset Manager/Institutional (closest analog to
+# "smart money"/institutional positioning).
+# "noncomm_long/short" -> Leveraged Funds (closest analog to trend-following
+# speculative positioning).
+TFF_COLUMN_ALIASES = {
+    "market": ["Market_and_Exchange_Names"],
+    "comm_long": ["Asset_Mgr_Positions_Long_All", "Asset_Mgr_Positions_Long_ALL"],
+    "comm_short": ["Asset_Mgr_Positions_Short_All", "Asset_Mgr_Positions_Short_ALL"],
+    "noncomm_long": ["Lev_Money_Positions_Long_All", "Lev_Money_Positions_Long_ALL"],
+    "noncomm_short": ["Lev_Money_Positions_Short_All", "Lev_Money_Positions_Short_ALL"],
+    "open_interest": ["Open_Interest_All", "Open_Interest_ALL"],
+    "comm_long_chg": ["Change_in_Asset_Mgr_Long_All", "Change_in_Asset_Mgr_Long_ALL"],
+    "comm_short_chg": ["Change_in_Asset_Mgr_Short_All", "Change_in_Asset_Mgr_Short_ALL"],
 }
 
-AGRICULTURE_MARKETS = {
-    "ZC": "Corn",
-    "ZW": "Wheat",
-    "ZS": "Soybeans",
-    "KC": "Coffee",
-    "SB": "Sugar",
-}
 
-ALL_MARKETS = {**EQUITY_MARKETS, **COMMODITY_MARKETS, **AGRICULTURE_MARKETS}
-
-REAL_YIELD_MARKETS = frozenset({"GC", "SI"})
-
-YAHOO_TICKERS = {
-    "NQ": "NQ=F", "ES": "ES=F", "YM": "YM=F", "RTY": "RTY=F",
-    "GC": "GC=F", "SI": "SI=F", "HG": "HG=F", "CL": "CL=F",
-    "ZC": "ZC=F", "ZW": "ZW=F", "ZS": "ZS=F", "KC": "KC=F", "SB": "SB=F",
-    "VIX": "^VIX", "DXY": "DX-Y.NYB", "US10Y": "^TNX",
-    "TIP": "TIP", "TIPS10Y": "DFII10",
-}
-
-COT_CODES = {
-    "NQ": "209742", "ES": "13874A", "YM": "124603", "RTY": "239742",
-    "GC": "088691", "SI": "084691", "HG": "085692", "CL": "067651",
-    "ZC": "002602", "ZW": "001602", "ZS": "005602", "KC": "083731", "SB": "080732",
-}
-
-SEASONALITY = {
-    "NQ":  {1:0.8, 2:0.3, 3:-0.2, 4:1.2, 5:0.5, 6:-0.3, 7:0.9, 8:-0.4, 9:-1.1, 10:0.4, 11:1.3, 12:1.1},
-    "ES":  {1:0.7, 2:0.2, 3:-0.1, 4:1.1, 5:0.4, 6:-0.2, 7:0.8, 8:-0.3, 9:-1.0, 10:0.5, 11:1.1, 12:1.0},
-    "YM":  {1:0.6, 2:0.2, 3:-0.1, 4:1.0, 5:0.3, 6:-0.2, 7:0.7, 8:-0.3, 9:-0.9, 10:0.4, 11:1.0, 12:0.9},
-    "RTY": {1:1.1, 2:0.4, 3:-0.3, 4:1.3, 5:0.2, 6:-0.4, 7:0.9, 8:-0.5, 9:-1.2, 10:0.6, 11:1.5, 12:1.2},
-    "GC":  {1:0.9, 2:-0.3, 3:0.2, 4:-0.1, 5:0.3, 6:0.1, 7:-0.4, 8:0.8, 9:0.9, 10:-0.2, 11:-0.5, 12:0.3},
-    "SI":  {1:0.7, 2:-0.4, 3:0.3, 4:-0.2, 5:0.2, 6:0.4, 7:-0.5, 8:0.9, 9:0.8, 10:-0.3, 11:-0.6, 12:0.2},
-    "HG":  {1:0.3, 2:0.5, 3:0.8, 4:0.4, 5:-0.2, 6:-0.5, 7:-0.3, 8:0.1, 9:0.2, 10:0.3, 11:-0.1, 12:-0.4},
-    "CL":  {1:-0.3, 2:0.2, 3:0.8, 4:0.9, 5:0.5, 6:-0.4, 7:-0.2, 8:-0.1, 9:-0.3, 10:-0.5, 11:-0.2, 12:-0.4},
-    "ZC":  {1:-0.2, 2:0.1, 3:0.3, 4:0.5, 5:0.8, 6:0.6, 7:-0.8, 8:-0.9, 9:-0.5, 10:-0.3, 11:0.2, 12:0.3},
-    "ZW":  {1:0.2, 2:0.4, 3:0.6, 4:0.3, 5:-0.2, 6:-0.8, 7:-0.6, 8:-0.3, 9:0.1, 10:0.3, 11:0.4, 12:0.3},
-    "ZS":  {1:0.1, 2:0.2, 3:0.4, 4:0.6, 5:0.8, 6:0.5, 7:-0.3, 8:-0.7, 9:-0.5, 10:-0.2, 11:0.1, 12:0.2},
-    "KC":  {1:-0.1, 2:0.2, 3:0.5, 4:0.3, 5:-0.4, 6:-0.6, 7:-0.3, 8:0.2, 9:0.4, 10:0.5, 11:0.3, 12:0.1},
-    "SB":  {1:0.3, 2:0.4, 3:0.5, 4:0.2, 5:-0.3, 6:-0.5, 7:-0.4, 8:-0.2, 9:0.1, 10:0.3, 11:0.2, 12:0.0},
-}
-
-SCORE_WEIGHTS = {
-    "commercial_cot": 35,
-    "seasonality": 25,
-    "macro_regime": 20,
-    "trend_alignment": 10,
-    "momentum": 10,
-}
-
-SCORE_THRESHOLDS = {
-    AssetClass.EQUITY: 52,
-    AssetClass.COMMODITY: 52,
-    AssetClass.AGRICULTURE: 48,
-}
-
-VIX_HARD_OVERRIDE = 35.0
-US10Y_MA_PERIOD = 200
-DXY_MA_PERIOD = 200
-REAL_YIELD_FALLING_THRESHOLD = 0.0
-
-ATR_PERIOD = 14
-ATR_STOP_MULTIPLIER = 2.0
-TP1_RISK_REWARD = 1.5
-TP2_RISK_REWARD = 3.0
-EXPECTED_HOLD_DAYS_MIN = 5
-EXPECTED_HOLD_DAYS_MAX = 20
+def _resolve_columns(df, aliases):
+    """Case-insensitive match of conceptual field names to actual CFTC column names."""
+    lower_map = {c.lower(): c for c in df.columns}
+    resolved = {}
+    for target, candidates in aliases.items():
+        for cand in candidates:
+            if cand.lower() in lower_map:
+                resolved[lower_map[cand.lower()]] = target
+                break
+    return resolved
 
 
-class Settings(BaseSettings):
-    model_config: ClassVar[SettingsConfigDict] = SettingsConfigDict(
-        env_file=".env",
-        env_file_encoding="utf-8",
-        case_sensitive=False,
-        extra="ignore",
+async def _download_cot_year(year, url_template):
+    url = url_template.format(year=year)
+    try:
+        async with httpx.AsyncClient(timeout=60) as client:
+            resp = await client.get(url)
+            resp.raise_for_status()
+        z = zipfile.ZipFile(io.BytesIO(resp.content))
+        fname = [n for n in z.namelist() if n.endswith(".txt")][0]
+        df = pd.read_csv(z.open(fname), low_memory=False)
+        return df
+    except Exception as exc:
+        logger.error("COT download failed year={} url={}: {}", year, url, exc)
+        return pd.DataFrame()
+
+
+async def fetch_cot_data(symbol):
+    cache_key = f"cot:{symbol}"
+    if cache_key in _cot_cache:
+        return _cot_cache[cache_key]
+
+    code = COT_CODES.get(symbol)
+    if not code:
+        return pd.DataFrame()
+
+    if symbol in EQUITY_MARKETS:
+        url_template = CFTC_TFF_URL
+        column_aliases = TFF_COLUMN_ALIASES
+        report_name = "TFF"
+    else:
+        url_template = CFTC_DISAGG_URL
+        column_aliases = DISAGG_COLUMN_ALIASES
+        report_name = "Disaggregated"
+
+    current_year = date.today().year
+    frames = []
+    for yr in [current_year - 1, current_year]:
+        df_raw = await _download_cot_year(yr, url_template)
+        if not df_raw.empty:
+            frames.append(df_raw)
+
+    if not frames:
+        return pd.DataFrame()
+
+    df = pd.concat(frames, ignore_index=True)
+
+    code_col = "CFTC_Contract_Market_Code"
+    if code_col not in df.columns:
+        return pd.DataFrame()
+
+    df = df[df[code_col].astype(str).str.strip() == code.strip()].copy()
+    if df.empty:
+        return pd.DataFrame()
+
+    date_col = next((c for c in DATE_COLUMN_CANDIDATES if c in df.columns), None)
+    if date_col is None:
+        logger.error(
+            "COT data for {} ({} report): no recognized date column. Actual columns: {}",
+            symbol, report_name, list(df.columns),
+        )
+        return pd.DataFrame()
+
+    available = _resolve_columns(df, column_aliases)
+    if "comm_long" not in available.values() or "comm_short" not in available.values():
+        logger.error(
+            "COT data for {} ({} report): no recognized position columns. Actual columns: {}",
+            symbol, report_name, list(df.columns),
+        )
+        return pd.DataFrame()
+
+    df = df[[date_col] + list(available.keys())].rename(columns={**available, date_col: "date"})
+
+    df["date"] = pd.to_datetime(df["date"], errors="coerce")
+    df = df.dropna(subset=["date"]).sort_values("date").set_index("date")
+    df["comm_net"] = df["comm_long"] - df["comm_short"]
+
+    lookback = 156
+    df["cot_index"] = (
+        df["comm_net"]
+        .rolling(lookback, min_periods=52)
+        .apply(lambda x: (x[-1] > x[:-1]).mean() * 100, raw=True)
     )
 
-    database_url: str = f"sqlite+aiosqlite:///{DATA_DIR}/platform.db"
-    redis_url: str = "redis://localhost:6379/0"
-    use_redis: bool = False
+    _cot_cache[cache_key] = df
+    return df
 
-    telegram_bot_token: str = ""
-    telegram_chat_id: str = ""
-    telegram_admin_ids: str = ""
 
-    fred_api_key: str = ""
-    quandl_api_key: str = ""
-    alpha_vantage_api_key: str = ""
+async def get_cot_index(symbol):
+    df = await fetch_cot_data(symbol)
+    if df.empty or "cot_index" not in df.columns:
+        return None
+    val = df["cot_index"].dropna()
+    if val.empty:
+        return None
+    return float(val.iloc[-1])
 
-    log_level: str = "INFO"
-    environment: str = "production"
-    cache_ttl_seconds: int = 3600
-    max_retries: int = 3
-    request_timeout: int = 30
 
-    daily_scan_hour: int = 6
-    daily_scan_minute: int = 30
-    weekly_cot_day: int = 5
-    weekly_cot_hour: int = 16
-
-    max_portfolio_risk_pct: float = 0.02
-    min_cash_reserve_pct: float = 0.15
-    high_risk_cash_reserve_pct: float = 0.30
-    max_positions: int = 12
-    max_sector_exposure_pct: float = 0.30
-
-    streamlit_port: int = 8501
-    streamlit_host: str = "0.0.0.0"
-
-    @field_validator("telegram_admin_ids", mode="before")
-    @classmethod
-    def parse_admin_ids(cls, v):
-        return v or ""
+class MarketRegime:
+    def __init__(self, vix, dxy_bullish, us10y_above_ma, real_yield_rising):
+        self.vix = vix
+        self.dxy_bullish = dxy_bullish
+        self.us10y_above_ma = us10y_above_ma
+        self.real_yield_rising = real_yield_rising
 
     @property
-    def admin_ids_list(self):
-        if not self.telegram_admin_ids:
-            return []
-        return [int(x.strip()) for x in self.telegram_admin_ids.split(",") if x.strip()]
+    def vix_override(self):
+        from src.core.config import VIX_HARD_OVERRIDE
+        return self.vix > VIX_HARD_OVERRIDE
+
+    @property
+    def dxy_regime(self):
+        return "bullish" if self.dxy_bullish else "bearish"
+
+    @property
+    def us10y_regime(self):
+        return "above_ma" if self.us10y_above_ma else "below_ma"
+
+    @property
+    def real_yield_regime(self):
+        return "rising" if self.real_yield_rising else "falling"
 
 
-@lru_cache(maxsize=1)
-def get_settings():
-    return Settings()
+async def fetch_market_regime():
+    vix_task = fetch_vix()
+    dxy_task = fetch_dxy()
+    us10y_task = fetch_us10y()
+    ry_task = fetch_real_yield()
+
+    vix, dxy_df, us10y_df, real_yield_chg = await asyncio.gather(vix_task, dxy_task, us10y_task, ry_task)
+
+    dxy_bullish = False
+    if not dxy_df.empty:
+        dxy_e = enrich_ohlcv(dxy_df)
+        if "ma_200" in dxy_e.columns and not dxy_e["ma_200"].isna().all():
+            last = dxy_e.iloc[-1]
+            dxy_bullish = bool(last["close"] > last["ma_200"])
+
+    us10y_above_ma = False
+    if not us10y_df.empty:
+        us10y_e = enrich_ohlcv(us10y_df)
+        if "ma_200" in us10y_e.columns and not us10y_e["ma_200"].isna().all():
+            last = us10y_e.iloc[-1]
+            us10y_above_ma = bool(last["close"] > last["ma_200"])
+
+    real_yield_rising = real_yield_chg > 0
+
+    return MarketRegime(
+        vix=float(vix),
+        dxy_bullish=dxy_bullish,
+        us10y_above_ma=us10y_above_ma,
+        real_yield_rising=real_yield_rising,
+    )
