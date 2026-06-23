@@ -204,6 +204,9 @@ def render_signal_card(sig):
     month = sig.scanned_at.month
     season = sig.seasonality_label(month)
 
+    signal_date_str = sig.first_seen_date.strftime("%b %d, %Y") if sig.first_seen_date else "N/A"
+    countdown_color = BEAR_RED if sig.days_remaining < 0 else (GOLD if sig.days_remaining <= 2 else TEXT_PRIMARY)
+
     html = f"""
     <div class="signal-card {dir_class}">
       <div style="display:flex; justify-content:space-between; align-items:center;">
@@ -214,6 +217,11 @@ def render_signal_card(sig):
         <div style="font-size:1.4rem; font-weight:800; color:{score_color(sig.score)};">{sig.score:.0f}/100</div>
       </div>
       <div style="margin-top:6px; font-size:1rem;">{dir_label}</div>
+      <div style="margin-top:6px; font-size:0.85rem; color:{TEXT_DIM};">
+        Signal date: <b style="color:{TEXT_PRIMARY};">{signal_date_str}</b>
+        &nbsp;|&nbsp;
+        <b style="color:{countdown_color};">{sig.signal_age_label}</b>
+      </div>
       <hr style="border-color:#2a2d3a; margin:8px 0;">
       <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; font-size:0.85rem; color:{TEXT_DIM};">
         <div>COT: <b style="color:{TEXT_PRIMARY};">{sig.scores.commercial_cot:.0f}/35</b></div>
