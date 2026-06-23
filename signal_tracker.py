@@ -79,3 +79,4 @@ def sync_signal_history(signals):
         conn.close()
 
     return signals
+    commint to main
