@@ -3,7 +3,7 @@ sys.path.insert(0, "/mount/src/swing-platform")
 
 
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import date, datetime
 
 import pandas as pd
 
@@ -52,6 +52,9 @@ class SignalResult:
     atr_risk_pct: float = 0.0
     expected_hold_days: int = 10
     cot_index_raw: float = None
+    # Date the signal first appeared (stamped by signal_tracker.sync_signal_history).
+    # None until the scanner runs it through the tracker.
+    first_seen_date: date = None
 
     @property
     def score(self):
@@ -67,6 +70,26 @@ class SignalResult:
         return (self.direction != Direction.NEUTRAL
                 and self.passes_threshold
                 and not self.regime.vix_override)
+
+    @property
+    def days_in_signal(self):
+        """1-indexed: the day the signal first appeared counts as Day 1."""
+        if not self.first_seen_date:
+            return 1
+        return (datetime.utcnow().date() - self.first_seen_date).days + 1
+
+    @property
+    def days_remaining(self):
+        """Can go negative once the signal has run past its expected hold window."""
+        return self.expected_hold_days - self.days_in_signal
+
+    @property
+    def signal_age_label(self):
+        held = self.days_in_signal
+        remaining = self.days_remaining
+        if remaining < 0:
+            return f"Day {held} - overdue by {abs(remaining)}d"
+        return f"Day {held} of ~{self.expected_hold_days} - {remaining}d left"
 
     def seasonality_label(self, month):
         bias = SEASONALITY.get(self.symbol, {}).get(month, 0)
