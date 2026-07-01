@@ -239,6 +239,112 @@ def render_signal_card(sig):
     st.markdown(html, unsafe_allow_html=True)
 
 
+LIFECYCLE_STATUS_COLORS = {
+    "active": ACCENT_BLUE,
+    "target_1_hit": "#8fd9c4",
+    "final_target_hit": BULL_GREEN,
+    "near_stop": GOLD,
+    "stop_hit": BEAR_RED,
+    "expired": TEXT_DIM,
+    "invalidated": TEXT_DIM,
+    "extended_trend": "#c792ea",
+    "trend_reversal": "#ff8c42",
+}
+
+
+def status_color(status):
+    return LIFECYCLE_STATUS_COLORS.get(status, TEXT_DIM)
+
+
+def render_live_countdown(label, target_dt_utc, key):
+    """
+    A small HTML/JS widget that ticks in real browser time between Streamlit
+    reruns, rather than freezing at page-render time. `target_dt_utc` is the
+    instant the countdown counts down to (pass a past instant for a
+    count-up "time since" display via a negative-looking label upstream).
+    """
+    import streamlit.components.v1 as components
+    iso = target_dt_utc.strftime("%Y-%m-%dT%H:%M:%SZ")
+    html = f"""
+    <div id="cd-{key}" style="font-family: Inter, sans-serif; font-size: 0.95rem; color: {TEXT_PRIMARY};">
+      <span style="color:{TEXT_DIM};">{label}:</span> <b id="cd-val-{key}">--</b>
+    </div>
+    <script>
+      (function() {{
+        const target = new Date("{iso}").getTime();
+        function tick() {{
+          const now = new Date().getTime();
+          let diff = target - now;
+          const sign = diff < 0 ? "-" : "";
+          diff = Math.abs(diff);
+          const d = Math.floor(diff / 86400000);
+          const h = Math.floor((diff % 86400000) / 3600000);
+          const m = Math.floor((diff % 3600000) / 60000);
+          const s = Math.floor((diff % 60000) / 1000);
+          let text;
+          if (d > 0) {{ text = sign + d + "d " + String(h).padStart(2,'0') + "h " + String(m).padStart(2,'0') + "m"; }}
+          else if (h > 0) {{ text = sign + h + "h " + String(m).padStart(2,'0') + "m " + String(s).padStart(2,'0') + "s"; }}
+          else {{ text = sign + m + "m " + String(s).padStart(2,'0') + "s"; }}
+          const el = document.getElementById("cd-val-{key}");
+          if (el) {{ el.textContent = text; }}
+        }}
+        tick();
+        setInterval(tick, 1000);
+      }})();
+    </script>
+    """
+    components.html(html, height=28)
+
+
+def render_lifecycle_card(trade):
+    """Renders a single tracked signal's lifecycle: status, P/L, MFE/MAE,
+    progress toward target, age, session, and live countdowns."""
+    from datetime import datetime, timedelta
+    from src.signals.lifecycle import compute_progress, STATUS_LABELS
+
+    progress = compute_progress(trade)
+    dir_class = "long" if trade.direction == "long" else "short"
+    s_color = status_color(trade.status)
+    pnl_color = BULL_GREEN if (trade.pnl_pct or 0) >= 0 else BEAR_RED
+
+    html = f"""
+    <div class="signal-card {dir_class}">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <div>
+          <span style="font-size:1.15rem; font-weight:700; color:{TEXT_PRIMARY};">{trade.symbol}</span>
+          <span style="color:{TEXT_DIM}; margin-left:8px;">{trade.direction.upper()}</span>
+        </div>
+        <div style="font-size:0.85rem; font-weight:700; color:{s_color}; border:1px solid {s_color};
+                    border-radius:6px; padding:2px 8px;">{STATUS_LABELS.get(trade.status, trade.status)}</div>
+      </div>
+      <div style="margin-top:8px; font-size:0.85rem; color:{TEXT_DIM};">
+        Entry <b style="color:{TEXT_PRIMARY};">{trade.entry_price:.4f}</b> &nbsp;|&nbsp;
+        Stop <b style="color:{BEAR_RED};">{trade.stop_loss:.4f}</b> &nbsp;|&nbsp;
+        TP1 <b style="color:{TEXT_PRIMARY};">{trade.take_profit_1:.4f}</b> &nbsp;|&nbsp;
+        TP2 <b style="color:{BULL_GREEN};">{trade.take_profit_2:.4f}</b> &nbsp;|&nbsp;
+        Last <b style="color:{TEXT_PRIMARY};">{(trade.last_price or trade.entry_price):.4f}</b>
+      </div>
+      <div style="margin-top:6px; font-size:0.85rem; color:{TEXT_DIM};">
+        P/L <b style="color:{pnl_color};">{(trade.pnl_pct or 0):+.2f}%</b> &nbsp;|&nbsp;
+        MFE <b style="color:{BULL_GREEN};">{(trade.mfe_pct or 0):+.2f}%</b> &nbsp;|&nbsp;
+        MAE <b style="color:{BEAR_RED};">{(trade.mae_pct or 0):+.2f}%</b> &nbsp;|&nbsp;
+        {progress.age_bucket} &nbsp;|&nbsp; {progress.session} session
+      </div>
+    </div>
+    """
+    st.markdown(html, unsafe_allow_html=True)
+
+    c1, c2 = st.columns(2)
+    with c1:
+        render_live_countdown("Time since issued", trade.opened_at, key=f"since_{trade.id}")
+    with c2:
+        deadline = trade.opened_at + timedelta(days=trade.expected_hold_days or 10)
+        render_live_countdown("Time to expected expiry", deadline, key=f"expiry_{trade.id}")
+
+    st.progress(min(1.0, max(0.0, progress.pct_to_target / 100)),
+                text=f"{progress.pct_to_target:.0f}% of the way to the final target")
+
+
 def render_freshness_bar(timestamp_label="Data as of"):
     """Render a consistent live-data freshness indicator and manual refresh button."""
     from datetime import datetime
@@ -260,3 +366,10 @@ def get_cached_scan():
     """
     from src.signals.scanner import scan_universe
     return async_run(scan_universe())
+
+
+@st.cache_data(ttl=30, show_spinner=False)
+def get_cached_active_trades():
+    """Active/open lifecycle trades, refreshed independently of the heavier scan cache."""
+    from src.signals.lifecycle import get_active_trades
+    return async_run(get_active_trades())
