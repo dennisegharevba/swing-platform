@@ -27,11 +27,15 @@ async def run_daily_scan():
         log.symbols_scanned = 13
         log.signals_found = len(result.signals)
 
-        from src.alerts.telegram_bot import send_scan_summary, send_signal_alert
+        from src.alerts.telegram_bot import send_scan_summary, send_signal_alert, send_status_change_alerts
         await send_scan_summary(result)
         for sig in result.top_signals[:3]:
             await send_signal_alert(sig)
             alerts_sent += 1
+
+        if result.lifecycle_transitions:
+            await send_status_change_alerts(result.lifecycle_transitions)
+            alerts_sent += len(result.lifecycle_transitions)
 
         async with AsyncSessionLocal() as session:
             from src.core.database import SignalRecord
@@ -83,6 +87,27 @@ async def run_daily_scan():
     logger.info("=== DAILY SCAN COMPLETE ===")
 
 
+async def run_lifecycle_check():
+    """
+    Lighter-weight than the full daily scan: re-scans the universe purely to
+    refresh trade lifecycle status (target/stop hits, expiry, near-stop
+    warnings) and alerts on any transitions. Runs more frequently than the
+    once-daily full scan so status updates and countdowns stay current
+    throughout market hours.
+    """
+    logger.info("=== LIFECYCLE CHECK STARTING ===")
+    try:
+        from src.signals.scanner import scan_universe
+        from src.alerts.telegram_bot import send_status_change_alerts
+        result = await scan_universe()
+        if result.lifecycle_transitions:
+            logger.info("Lifecycle check: {} status change(s)", len(result.lifecycle_transitions))
+            await send_status_change_alerts(result.lifecycle_transitions)
+    except Exception as exc:
+        logger.error("Lifecycle check error: {}", exc)
+    logger.info("=== LIFECYCLE CHECK COMPLETE ===")
+
+
 async def run_weekly_cot_scan():
     logger.info("=== WEEKLY COT SCAN STARTING ===")
     from src.data.market_data import _cot_cache
@@ -104,6 +129,12 @@ def create_scheduler():
         run_weekly_cot_scan,
         CronTrigger(day_of_week=settings.weekly_cot_day, hour=settings.weekly_cot_hour, minute=0, timezone=tz),
         id="weekly_cot_scan", name="Weekly COT Scan", replace_existing=True,
+    )
+
+    scheduler.add_job(
+        run_lifecycle_check,
+        CronTrigger(day_of_week="mon-fri", hour="0-23", minute="*/15", timezone=tz),
+        id="lifecycle_check", name="Signal Lifecycle Check", replace_existing=True,
     )
 
     return scheduler
