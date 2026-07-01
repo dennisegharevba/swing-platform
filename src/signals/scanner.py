@@ -9,12 +9,14 @@ from src.data.market_data import fetch_market_regime, fetch_multiple, MarketRegi
 from src.risk.risk_engine import attach_risk, compute_aggregate_macro_score
 from src.signals.scorer import score_market
 from src.signals.signal_tracker import sync_signal_history
+from src.signals.lifecycle import sync_trade_lifecycle
 class ScanResult:
-    def __init__(self, signals, regime, scan_duration, scanned_at):
+    def __init__(self, signals, regime, scan_duration, scanned_at, lifecycle_transitions=None):
         self.signals = signals
         self.regime = regime
         self.scan_duration = scan_duration
         self.scanned_at = scanned_at
+        self.lifecycle_transitions = lifecycle_transitions or []
     @property
     def equities(self):
         return [s for s in self.signals if s.asset_class == AssetClass.EQUITY]
@@ -72,9 +74,17 @@ async def scan_universe(symbols=None):
             valid_signals = await asyncio.to_thread(sync_signal_history, valid_signals)
         except Exception as exc:
             logger.error("Signal history tracking failed: {}", exc)
+    lifecycle_transitions = []
+    try:
+        lifecycle_transitions = await sync_trade_lifecycle(valid_signals)
+    except Exception as exc:
+        logger.error("Trade lifecycle sync failed: {}", exc)
     duration = time.perf_counter() - start
     logger.info("Scan complete - {}/{} signals in {:.1f}s", len(valid_signals), len(symbols), duration)
-    return ScanResult(signals=valid_signals, regime=regime, scan_duration=duration, scanned_at=scanned_at)
+    return ScanResult(
+        signals=valid_signals, regime=regime, scan_duration=duration, scanned_at=scanned_at,
+        lifecycle_transitions=lifecycle_transitions,
+    )
 async def scan_equities():
     return await scan_universe(symbols=list(EQUITY_MARKETS.keys()))
 async def scan_commodities():
