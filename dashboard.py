@@ -35,6 +35,7 @@ PAGES = {
     "Overview": "src/dashboard/pages/overview.py",
     "Portfolio": "src/dashboard/pages/portfolio.py",
     "Signals": "src/dashboard/pages/signals.py",
+    "Signal Lifecycle": "src/dashboard/pages/signal_lifecycle.py",
     "COT Dashboard": "src/dashboard/pages/cot_dashboard.py",
     "Seasonality": "src/dashboard/pages/seasonality.py",
     "VIX Dashboard": "src/dashboard/pages/vix_dashboard.py",
